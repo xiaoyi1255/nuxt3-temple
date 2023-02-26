@@ -2218,7 +2218,7 @@ gzip-size@^7.0.0:
 
 h3@^1.5.0:
   version "1.5.0"
-  resolved "https://registry.npmmirror.com/h3/-/h3-1.5.0.tgz"
+  resolved "https://registry.npmmirror.com/h3/-/h3-1.5.0.tgz#667fce40383712da314200312d043e892c5002fc"
   integrity sha512-M+T6P4iOB0ipkC/ZCdw2w8iTF7yY6phmkILOwlrtcPuVv+KW9BilOspYlvnblpKx1nnNl+3iBsZIvZ8pvKM8Nw==
   dependencies:
     cookie-es "^0.5.0"

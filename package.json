@@ -14,5 +14,8 @@
     "nuxt": "^3.2.2",
     "postcss": "^8.4.21",
     "postcss-pxtorem": "^6.0.0"
+  },
+  "dependencies": {
+    "h3": "^1.5.0"
   }
 }
