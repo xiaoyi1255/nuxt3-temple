@@ -1,5 +1,9 @@
 {
   "private": true,
+  "description": "Nuxt3 搭建的模板项目",
+  "version": "1.0.0",
+  "keywords": ["Vuejs", "Nuxtjs", "Middleware", "Postcss"],
+  "author": "xiaoyi",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
