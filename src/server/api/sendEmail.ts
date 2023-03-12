@@ -1,20 +1,20 @@
 import nodemailer from 'nodemailer';
 
 export default defineEventHandler(async (context) => {
-    const params = await readBody(context) || {}
+    const params = await readBody(context) || {} // 讀取參數
     const transporter = nodemailer.createTransport({
         host: 'smtp.qq.com',
         port: 465, // SMTP 端口
         secure: true, // 使用 SSL
         secureConnection: true, // 使用 SSL
         auth: {
-            user: "2489646826@qq.com",
-            pass: 'hqvfqdwsupvbdiaj'
+            user: "xxxx@qq.com",
+            pass: 'xxxxhqvfqdwsupvbdiaj'
         }
     });
     const mailOptions = {
-        from: '2489646826@qq.com', // 发件地址
-        to: '1255274497@qq.com', // 收件列表
+        from: '2xxxx@qq.com', // 发件地址
+        to: 'xxxx@qq.com', // 收件列表
         subject: 'Hollo', // 标题
         html: '<b>Hello world ?</b>' // html 内容
     };
