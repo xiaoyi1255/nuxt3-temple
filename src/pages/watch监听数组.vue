@@ -21,5 +21,9 @@ setInterval(() => {
 watchEffect(() => {
     console.log('watchEffect', state.str)
 
+}, {
+    flush: 'post',
+    onTrack:()=>{},
+    onTrigger:()=>{}
 })
 </script>
