@@ -2,7 +2,12 @@
   "private": true,
   "description": "Nuxt3 搭建的模板项目",
   "version": "1.0.0",
-  "keywords": ["Vuejs", "Nuxtjs", "Middleware", "Postcss"],
+  "keywords": [
+    "Vuejs",
+    "Nuxtjs",
+    "Middleware",
+    "Postcss"
+  ],
   "author": "xiaoyi",
   "scripts": {
     "build": "nuxt build",
@@ -20,7 +25,7 @@
     "postcss-pxtorem": "^6.0.0"
   },
   "dependencies": {
-    "ant-design-vue": "^3.2.15",
+    "ant-design-vue": "^4.0.0",
     "h3": "^1.5.0",
     "nodemailer": "^6.9.1"
   }
