@@ -54,10 +54,11 @@ const getRoomListInfo = () => {
   })
 }
 onMounted(() => {
-    window.addEventListener('load', onLoadHandle)
+    // window.addEventListener('load', onLoadHandle)
+    onLoadHandle()
 })
 onUnmounted(()=>{
-    window.removeEventListener('load', onLoadHandle)
+    // window.removeEventListener('load', onLoadHandle)
 })
 </script>
 
