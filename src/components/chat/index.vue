@@ -28,7 +28,8 @@ const onLoadHandle = () => {
     console.log('OnLoad')
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo') ?? '{}')
     if (userInfo?.name) {
-        $fetch('http://localhost:3000/updateInfo',{
+        $fetch('http://118.89.125.27:3000/updateInfo',{
+        // $fetch('http://localhost:3000/updateInfo',{
             method: 'POST',
             params: {
                 name: userInfo?.name,
@@ -39,7 +40,8 @@ const onLoadHandle = () => {
 }
 const getRoomListInfo = () => {
   state.loading = true
-  $fetch('http://localhost:3000/getAllRoomInfo', {
+  $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
+//   $fetch('http://localhost:3000/getAllRoomInfo', {
     method: 'GET',
   }).then(res => {
     state.roomList = res

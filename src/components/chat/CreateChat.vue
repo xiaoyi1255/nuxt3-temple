@@ -90,7 +90,8 @@ const handleOk = () => {
 }
 const getRoomListInfo = () => {
   state.loading = true
-  $fetch('http://localhost:3000/getAllRoomInfo', {
+  $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
+  // $fetch('http://localhost:3000/getAllRoomInfo', {
     method: 'GET',
   }).then(res => {
     state.roomList = res
