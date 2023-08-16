@@ -1,8 +1,14 @@
 <template>
   <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
   <Button @click="newRoom('join')">{{ title.join }}</Button>
+  <Button @click="newRoom('back')">{{ title.back }}</Button>
+  <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
 
-  <Modal v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
+  <Modal
+    v-model:open="state.roomShow"
+    :title="title[state.type]"
+    @ok="handleOk"
+  >
     <input
       type="number"
       v-model.trim="state.room"
@@ -10,18 +16,27 @@
       placeholder="请输入4位数字房间号"
     />
     <input
-      style="margin-top: 2vh; display: block;"
+      style="margin-top: 2vh; display: block"
       v-model.trim="state.name"
       @keyup.enter="handleOk"
       placeholder="请输入姓名"
     />
+  </Modal>
+  <Modal v-model:open="state.roomListShow" title="房间列表" @ok="close">
+    <div class="roomlist">
+      <div v-for="(item, index) in state.roomList" :key="index">
+        <div v-if="item?.roomId">房间号:<span>{{ item.roomId }}</span>---人数<span>{{ item.userList?.length }}</span></div>
+      </div>
+    </div>
   </Modal>
 </template>
 <script lang="ts" setup>
 type DataType = {
   newMessage: string;
   room: number | '';
+  roomList: any[];
   roomShow: boolean;
+  roomListShow: boolean;
   messages: {
     id: Date;
     text: string;
@@ -30,9 +45,9 @@ type DataType = {
   socket: any;
   name: string;
   type: string
+  loading: boolean
 };
 
-import "ant-design-vue/dist/reset.css";
 import { Button, Input, message, Modal } from "ant-design-vue";
 import { reactive } from "vue";
 
@@ -40,15 +55,19 @@ const emit = defineEmits(['changeRoom'])
 const state: DataType = reactive({
   newMessage: "",
   roomShow: false,
+  roomListShow: false,
+  roomList: [],
   room: '',
   name: '',
   messages: [],
   socket: null,
-  type: ''
+  type: '',
+  loading: false
 });
 const title = {
   create: '创建房间',
-  join: '加入房间'
+  join: '加入房间',
+  back: '返回房间',
 }
 
 const newRoom = (type) => {
@@ -69,11 +88,26 @@ const handleOk = () => {
   state.roomShow = false;
   emit('changeRoom', {name: state.name, roomId: state.room, type: state.type})
 }
-  
+const getRoomListInfo = () => {
+  state.loading = true
+  $fetch('http://localhost:3000/getAllRoomInfo', {
+    method: 'GET',
+  }).then(res => {
+    state.roomList = res
+    if (res.length) {
+      state.roomListShow = true
+    }
+    console.log(res)
+  }).finally(()=>{
+    state.loading = false
+  })
+}
+const close = ()=> {
+  state.roomListShow = false
+}
 </script>
   
 <style scoped lang="less">
-@import "ant-design-vue/dist/reset.css";
 Button {
   padding: 5px;
   margin: 0 5px;

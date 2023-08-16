@@ -2,7 +2,8 @@
   <div class="chat-container">
     <Button @click="exit(state)">退出房间</Button>
     <p class="tc title">{{connected ? `房间号：${state.roomId}`: '加入房间失败'}}</p>
-    <p>当前房间人数：{{ users }}</p>
+    <p>在线人数{{ usersInfo.activityUsers }}</p>
+    <p>当前房间人数：{{ usersInfo.users }}</p>
     <div class="message">
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
         <p class="msg">
@@ -22,19 +23,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { message as Message, Button } from 'ant-design-vue'
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
 const connected = ref(false);
 const message = ref('');
-const users = ref(0)
+const usersInfo = reactive({
+  totalUserList: [], // 
+  activityUsers: 0,
+  users: 0
+})
 const receivedMessages = ref([]);
 let socket = null;
 
 const connectWebSocket = () => {
-  // const socketUrl = 'ws://localhost:3000/ws'; // Replace with your WebSocket server URL
-  const socketUrl = 'ws://118.89.125.27:3000/ws'; // Replace with your WebSocket server URL
+  const socketUrl = 'ws://localhost:3000/ws'; // Replace with your WebSocket server URL
+  // const socketUrl = 'ws://118.89.125.27:3000/ws'; // Replace with your WebSocket server URL
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
@@ -45,9 +50,13 @@ const connectWebSocket = () => {
   socket.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     const { name, roomId } = props.state
-    users.value = msg.users || 0
+    if (roomId == msg.roomId) {
+      usersInfo.totalUserList = msg.totalUserList || []
+      usersInfo.activityUsers = msg.activityUsers || 0
+      usersInfo.users = msg.users || 0
+    }
     if (msg?.code == 200 && msg.roomId == roomId) {
-      receivedMessages.value.push(msg);
+      msg?.type != 'update' && receivedMessages.value.push(msg);
     } else {
       if (msg.name == name && roomId == msg.roomId ) {
         Message.error(msg.text)
