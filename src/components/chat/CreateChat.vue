@@ -1,7 +1,7 @@
 <template>
   <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
   <Button @click="newRoom('join')">{{ title.join }}</Button>
-  <Button @click="newRoom('back')">{{ title.back }}</Button>
+  <!-- <Button @click="newRoom('back')">{{ title.back }}</Button> -->
   <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
 
   <Modal
