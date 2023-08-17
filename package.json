@@ -11,7 +11,7 @@
   "author": "xiaoyi",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --port=3001",
+    "dev": "nuxt dev --port=80",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"

@@ -1,10 +1,21 @@
 <template>
-  <div>
-    <ListButton />
-  </div>
-</template>
+    <div class="chat">
+      <Chat />
+    </div>
+  </template>
 
-<script lang="ts" setup>
-const res = await $fetch("/api/user");
-console.log(res) // {"code": 200, "data": { "name": "xiaoyi"} }
+<script setup>
+useHead({
+  titleTemplate: 'chat', // 可以写模板
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  charset: 'utf-8',
+  meta: [
+    { name: 'description', content: 'chat' }
+  ],
+  // body添加类名
+  bodyAttrs: {
+    class: 'test'
+  }
+})
+
 </script>
