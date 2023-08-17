@@ -4,8 +4,8 @@
   <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
 
   <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
-    <input type="number" v-model.trim="state.room" maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
-    <input style="margin-top: 2vh; display: block" maxlength="8" v-model.trim="state.name" @keyup.enter="handleOk"
+    <input type="number" v-model.trim="state.room" :maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
+    <input style="margin-top: 2vh; display: block" :maxlength="8" v-model.trim="state.name" @keyup.enter="handleOk"
       placeholder="请输入姓名" />
   </Modal>
 

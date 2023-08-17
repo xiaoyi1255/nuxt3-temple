@@ -170,7 +170,7 @@ Button {
   .user {
     display: flex;
     justify-content: flex-end;
-    align-items: end;
+    align-items: flex-endd;
     flex-direction: column;
     order: 2;
     
