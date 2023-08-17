@@ -1,28 +1,15 @@
 <template>
   <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
   <Button @click="newRoom('join')">{{ title.join }}</Button>
-  <!-- <Button @click="newRoom('back')">{{ title.back }}</Button> -->
   <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
 
-  <Modal
-    v-model:open="state.roomShow"
-    :title="title[state.type]"
-    @ok="handleOk"
-  >
-    <input
-      type="number"
-      v-model.trim="state.room"
-      @keyup.enter="handleOk"
-      placeholder="请输入4位数字房间号"
-    />
-    <input
-      style="margin-top: 2vh; display: block"
-      v-model.trim="state.name"
-      @keyup.enter="handleOk"
-      placeholder="请输入姓名"
-    />
+  <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
+    <input type="number" v-model.trim="state.room" maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
+    <input style="margin-top: 2vh; display: block" maxlength="8" v-model.trim="state.name" @keyup.enter="handleOk"
+      placeholder="请输入姓名" />
   </Modal>
-  <Modal v-model:open="state.roomListShow" title="房间列表" @ok="close">
+
+  <Modal v-if="state.roomListShow" v-model:open="state.roomListShow" title="房间列表" @ok="close">
     <div class="roomlist">
       <div v-for="(item, index) in state.roomList" :key="index">
         <div v-if="item?.roomId">房间号:<span>{{ item.roomId }}</span>---人数<span>{{ item.userList?.length }}</span></div>
@@ -49,7 +36,6 @@ type DataType = {
 };
 
 import { Button, Input, message, Modal } from "ant-design-vue";
-import { reactive } from "vue";
 
 const emit = defineEmits(['changeRoom'])
 const state: DataType = reactive({
@@ -86,12 +72,12 @@ const handleOk = () => {
     return
   }
   state.roomShow = false;
-  emit('changeRoom', {name: state.name, roomId: state.room, type: state.type})
+  emit('changeRoom', { name: state.name, roomId: state.room, type: state.type })
 }
 const getRoomListInfo = () => {
   state.loading = true
   $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
-  // $fetch('http://localhost:3000/getAllRoomInfo', {
+    // $fetch('http://localhost:3000/getAllRoomInfo', {
     method: 'GET',
   }).then(res => {
     state.roomList = res
@@ -99,11 +85,11 @@ const getRoomListInfo = () => {
       state.roomListShow = true
     }
     console.log(res)
-  }).finally(()=>{
+  }).finally(() => {
     state.loading = false
   })
 }
-const close = ()=> {
+const close = () => {
   state.roomListShow = false
 }
 </script>
@@ -113,6 +99,7 @@ Button {
   padding: 5px;
   margin: 0 5px;
 }
+
 .chat-room {
   max-width: 500px;
   margin: 0 auto;

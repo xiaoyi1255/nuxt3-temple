@@ -1,8 +1,8 @@
 <template>
-    <client-only placeholder="loading...">
-        <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
-        <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
-    </client-only>
+    <!-- <client-only placeholder="loading...">
+    </client-only> -->
+    <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
+    <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
 </template>
 
 <script lang="ts" setup>
@@ -37,21 +37,6 @@ const onLoadHandle = () => {
             }
         })
     }
-}
-const getRoomListInfo = () => {
-  state.loading = true
-  $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
-//   $fetch('http://localhost:3000/getAllRoomInfo', {
-    method: 'GET',
-  }).then(res => {
-    state.roomList = res
-    if (res.length) {
-      state.roomListShow = true
-    }
-    console.log(res)
-  }).finally(()=>{
-    state.loading = false
-  })
 }
 onMounted(() => {
     // window.addEventListener('load', onLoadHandle)
