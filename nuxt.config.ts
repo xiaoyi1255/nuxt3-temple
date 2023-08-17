@@ -3,7 +3,7 @@ import { resolve } from 'path'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
     srcDir: "src/",
-    // ssr: false, // 默认为true false 则是 csr
+    ssr: false, // 默认为true false 则是 csr
     app: {
       head: {
         title: 'project name',
