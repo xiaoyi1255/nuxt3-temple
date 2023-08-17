@@ -1,7 +1,8 @@
 <template>
   <div class="chat-container">
     <Button @click="exit(state)">退出房间</Button>
-    <p class="tc title">{{connected ? `房间号：${state.roomId}`: '加入房间失败'}}</p>
+    <p class="tc title">{{connected ? `房间号：${state.roomId}`: '加入房间失败'}} <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button></p>
+    
     <p>在线人数{{ usersInfo.activityUsers }}</p>
     <p>当前房间人数：{{ usersInfo.users }}</p>
     <div class="message">
@@ -23,7 +24,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, reactive } from 'vue';
 import { message as Message, Button } from 'ant-design-vue'
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
@@ -38,8 +38,7 @@ const receivedMessages = ref([]);
 let socket = null;
 
 const connectWebSocket = () => {
-  // const socketUrl = 'ws://localhost:3000/ws'; // Replace with your WebSocket server URL
-  const socketUrl = 'ws://118.89.125.27:3000/ws'; // Replace with your WebSocket server URL
+  const socketUrl = 'ws://118.89.125.27:3000/ws';
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
@@ -64,12 +63,25 @@ const connectWebSocket = () => {
       }
     }
   };
-
-  socket.onclose = () => {
+  socket.onerror = (msg) => {
+    console.log('errr')
     connected.value = false;
     socket = null;
+    Message.error(msg)
+  };
+  socket.onclose = (msg) => {
+    console.log('close')
+    connected.value = false;
+    socket = null;
+    exit()
+    Message.error(msg)
   };
 };
+
+const reConnectWebSocket = () => {
+  flag = false
+  connectWebSocket()
+}
 let flag = false
 const sendMessage = (type = '') => {
   if (!socket) return;
@@ -101,14 +113,24 @@ const exit = (state = {} ) => {
     emit('changeRoom', {})
   }
 }
+const onLoadHandle = () => {
+    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') ?? '{}')
+    if (userInfo?.name) {
+        $fetch('http://118.89.125.27:3000/updateInfo',{
+            method: 'POST',
+            params: {
+                name: userInfo?.name,
+                roomId: userInfo?.roomId
+            }
+        })
+    }
+    exit()
+}
 
 onMounted(() => {
   connectWebSocket();
+  window.addEventListener('beforeunload', onLoadHandle)
 
-});
-
-onBeforeUnmount(() => {
-  exit()
 });
 </script>
 

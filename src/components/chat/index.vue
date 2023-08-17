@@ -24,27 +24,7 @@ const changeRoom = (newInfo = {}) => {
         sessionStorage.setItem('userInfo', JSON.stringify(newInfo))
     }
 }
-const onLoadHandle = () => {
-    console.log('OnLoad')
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') ?? '{}')
-    if (userInfo?.name) {
-        $fetch('http://118.89.125.27:3000/updateInfo',{
-        // $fetch('http://localhost:3000/updateInfo',{
-            method: 'POST',
-            params: {
-                name: userInfo?.name,
-                roomId: userInfo?.roomId
-            }
-        })
-    }
-}
-onMounted(() => {
-    // window.addEventListener('load', onLoadHandle)
-    onLoadHandle()
-})
-onUnmounted(()=>{
-    // window.removeEventListener('load', onLoadHandle)
-})
+
 </script>
 
 <style>

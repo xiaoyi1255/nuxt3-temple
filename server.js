@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
+const { message } = require('ant-design-vue');
 const app = express();
 
 const roomMap = new Map();
@@ -113,16 +114,20 @@ function wsHandles() {
 			msg.code = 200;
 			const { type, roomId, name, id } = msg || {};
 			const room = roomMap.get(roomId);
+			const time = new Date().now
 			if (type == 'create') {
 				if (!room) {
 					const roomInfo = {
 						roomId,
 						createUser: name,
 						createTime: id,
-						serverTime: new Date().now,
+						serverTime: time,
 						userList: [
-							{ name, jionTime: +new Date(), active: true }
-						]
+							{ name, jionTime: time, active: true }
+						],
+						messageList: [
+							
+						],
 					};
 					roomMap.set(roomId, roomInfo);
 					msg.text = '您已加入房间！！！';
@@ -167,13 +172,27 @@ function wsHandles() {
 					const index = room.userList.findIndex(
 						(item) => item.name === name
 					);
-					console.log(index);
 					index != -1 && room.userList.splice(index, 1);
 					msg.text = name + '离开了房间';
 					if (roomMap.get(roomId)?.userList?.length == 0) {
 						roomMap.delete(roomId);
 					}
 				}
+			} else { //保存消息
+				const currentRoom = roomMap.get(roomId)
+				if (currentRoom) {
+					const msgInfo = {
+						name, id, roomId,type,
+						text: msg.text,
+						code: msg.code
+					}
+					if (currentRoom?.messageList) {
+						roomMap.get(roomId)?.messageList.push(msgInfo)
+					} else {
+						roomMap.get(roomId).messageList = [msgInfo]
+					}
+				}
+				
 			}
 			msg.users = roomMap.get(roomId)?.userList?.length || 0;
 			msg.totalUserList = roomMap.get(roomId)?.userList || []
@@ -185,9 +204,16 @@ function wsHandles() {
 				}
 			});
 		});
-	});
-	wss.on('error', (socket) => {
-		console.log('报错了');
+
+		wss.on('error', (message) => {
+			console.log('报错了');
+		});
+		wss.on('close', (message) => {
+			console.log('连接关闭：')
+		})
+		wss.on('open', (message) => {
+			console.log('open', message)
+		})
 	});
 }
 

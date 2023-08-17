@@ -10,11 +10,18 @@
   </Modal>
 
   <Modal v-if="state.roomListShow" v-model:open="state.roomListShow" title="房间列表" @ok="close">
-    <div class="roomlist">
-      <div v-for="(item, index) in state.roomList" :key="index">
-        <div v-if="item?.roomId">房间号:<span>{{ item.roomId }}</span>---人数<span>{{ item.userList?.length }}</span></div>
+    <div class="roomlist" v-if="state.roomList?.length">
+      <div v-for="(item, index) in state.roomList" :key="index" class="roomItem">
+        <div v-if="item?.roomId">房间号: <span>{{ item.roomId }}</span>---人数: <span>{{ item.userList?.length }}</span></div>
+        <div v-if="item.userList?.length" class="user">
+          房间成员：
+          <div v-for="(user,index1) in item.userList" :key="index1">
+            <div>· {{ user.active ? '在线 ' : '离线 ' }} {{ user.name }}  </div>
+          </div>
+        </div>
       </div>
     </div>
+    <div v-else>空空如也~~</div>
   </Modal>
 </template>
 <script lang="ts" setup>
@@ -77,7 +84,6 @@ const handleOk = () => {
 const getRoomListInfo = () => {
   state.loading = true
   $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
-    // $fetch('http://localhost:3000/getAllRoomInfo', {
     method: 'GET',
   }).then(res => {
     state.roomList = res
@@ -135,6 +141,18 @@ input {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+.roomItem {
+  background-color: #eee;
+  padding: 2vh 1vh;
+  border-radius: 1vh;
+  span {
+    color: #007bff;
+    font-weight: 500;
+  }
+  .user {
+    margin: 1vh;
+  }
 }
 </style>
   
