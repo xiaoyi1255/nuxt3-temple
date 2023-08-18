@@ -3,6 +3,9 @@
     </client-only> -->
     <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
     <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
+    <div style="margin-top: 3vh;">
+        <Upload />
+    </div>
 </template>
 
 <script lang="ts" setup>
