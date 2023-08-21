@@ -10,7 +10,7 @@ router.post('/imgs', (req, res) => {
   busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
     const names = filename.filename.split('.')
     const preName = names[0] + '-';
-    _fileName = new Date().getTime() + '.' + names[1]
+    _fileName = new Date().getTime() + '.' + 'png'
     const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
     file.pipe(fs.createWriteStream(saveTo));
   });
