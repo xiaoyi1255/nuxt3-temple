@@ -4,8 +4,11 @@ const express = require('express');
 const app = express();
 const cors = require('cors'); // 导入 cors 中间件
 const uploadRoutes = require('./routes/upload.js');
+const path = require('path')
 
-app.use(express.static('public'));
+// 托管静态文件
+app.use('/static',express.static(path.join(__dirname,'./public'))) // 图片文件夹路径
+
 // 自定义中间件，设置强制缓存头部
 // app.use('public', (req, res, next) => {
 // 	// 设置 Cache-Control 头部，max-age 表示缓存时间（以秒为单位）
