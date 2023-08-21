@@ -43,6 +43,7 @@ type DataType = {
 };
 
 import { Button, Input, message, Modal } from "ant-design-vue";
+import { config } from '@/baseConfig'
 
 const emit = defineEmits(['changeRoom'])
 const state: DataType = reactive({
@@ -83,7 +84,7 @@ const handleOk = () => {
 }
 const getRoomListInfo = () => {
   state.loading = true
-  $fetch('http://118.89.125.27:3000/getAllRoomInfo', {
+  $fetch(`${config.baseUrl}/getAllRoomInfo`, {
     method: 'GET',
   }).then(res => {
     state.roomList = res

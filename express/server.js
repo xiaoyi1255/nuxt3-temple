@@ -94,13 +94,9 @@ server.on('upgrade', (request, socket, head) => {
 		case '/ws':
 			// 只允许 这个主机下的请求访问
 			if (
-				// request.headers.origin.includes('118.89.125.27')
+				request.headers.origin.includes('118.89.125.27') ||
 				request.headers.origin.includes('localhost')
 			) {
-				console.log(
-					'request.headers.origin111',
-					request.headers.origin
-				);
 				wss.handleUpgrade(request, socket, head, (ws) => {
 					Socket = socket
 					wss.emit('connection', ws, request);

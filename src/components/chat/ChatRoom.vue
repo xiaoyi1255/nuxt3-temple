@@ -7,7 +7,10 @@
     <p>当前房间人数：{{ usersInfo.users }}</p>
     <div class="message">
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
-        <p class="msg">
+        <div v-if="item.imgSrc" class="msg msg-img">
+          <Image :src="item.imgSrc" alt="" />
+        </div>
+        <p class="msg" v-else>
           {{ item.text }}
         </p>
         <div class="user">
@@ -16,7 +19,8 @@
         </div>
       </div>
     </div>
-    <div v-if="connected">
+    <div v-if="connected" style="padding: 2vh 0;width: 80vw;overflow: hidden;">
+      <Upload v-if="connected" @uploadSucess="uploadSucess" />
       <textarea maxlength="100"  class="message-input" v-model="message" placeholder="输入消息..." />
       <div class="submit" @click="sendMessage">发送</div>
     </div>
@@ -24,7 +28,10 @@
 </template>
 
 <script setup>
-import { message as Message, Button } from 'ant-design-vue'
+import { message as Message, Button, Image } from 'ant-design-vue'
+import Upload  from '../upload/index.vue'
+import { config } from '@/baseConfig'
+
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
 const connected = ref(false);
@@ -38,7 +45,7 @@ const receivedMessages = ref([]);
 let socket = null;
 
 const connectWebSocket = () => {
-  const socketUrl = 'ws://118.89.125.27:3000/ws';
+  const socketUrl = config?.baseWsUrl + '/ws';
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
@@ -83,11 +90,12 @@ const reConnectWebSocket = () => {
   connectWebSocket()
 }
 let flag = false
-const sendMessage = (type = '') => {
+const sendMessage = (type = '', imgSrc='') => {
   if (!socket) return;
   const state = {...props.state}
   const messageObj = {
     ...state,
+    imgSrc,
     text: message.value,
     id: Date.now(),
     
@@ -105,6 +113,10 @@ const sendMessage = (type = '') => {
   message.value = '';
 };
 
+const uploadSucess = (fileUrl='') => {
+  sendMessage('upload', fileUrl)
+}
+
 const exit = (state = {} ) => {
   if (socket) {
     const type = 'leave'
@@ -116,7 +128,7 @@ const exit = (state = {} ) => {
 const onLoadHandle = () => {
     const userInfo = JSON.parse(sessionStorage.getItem('userInfo') ?? '{}')
     if (userInfo?.name) {
-        $fetch('http://118.89.125.27:3000/updateInfo',{
+        $fetch(`${config?.baseUrl}/updateInfo`,{
             method: 'POST',
             params: {
                 name: userInfo?.name,
@@ -153,12 +165,13 @@ Button {
 }
 
 .message-input {
-  width: 100%;
+  width: 80vw;
   display: block;
   min-height: 15vh;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  box-sizing: border-box;
   margin-top: 1vw;
 }
 
@@ -188,6 +201,11 @@ Button {
     border: 1px solid #eee;
     border-radius: 2vh;
     order: 1;
+  }
+  .msg-img {
+    width: 30vh;
+    padding: 0;
+    background-color: transparent;
   }
   .user {
     display: flex;
