@@ -18,7 +18,7 @@ router.post('/imgs', (req, res) => {
   busboy.on('finish', function () {
     const resObj = {
       msg: '发送成功',
-      url: 'http://118.89.125.27:3000/uploads/' + _fileName
+      url: '/uploads/' + _fileName
     }
     console.log('文件上传：', _fileName)
     res.send(resObj);

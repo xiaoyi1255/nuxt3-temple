@@ -8,7 +8,7 @@
     <div class="message">
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
         <div v-if="item.imgSrc" class="msg msg-img">
-          <Image :src="item.imgSrc" alt="" />
+          <Image :src="getImgSrc(item.imgSrc)" alt="" />
         </div>
         <p class="msg" v-else>
           {{ item.text }}
@@ -138,6 +138,8 @@ const onLoadHandle = () => {
     }
     exit()
 }
+
+const getImgSrc = (url='') =>  config.baseUrl + url
 
 onMounted(() => {
   connectWebSocket();
