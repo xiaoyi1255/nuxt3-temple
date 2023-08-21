@@ -12,6 +12,7 @@ router.post('/imgs', (req, res) => {
     const names = filename.filename.split('.')
     const preName = names[0] + '-';
     _fileName = new Date().getTime() + '.' + names[1]
+    const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
     if (names[1] == 'heic') {
       _fileName = new Date().getTime() + '.' + 'png'
       const arrayBuffer = await file.arrayBuffer();
@@ -21,7 +22,6 @@ router.post('/imgs', (req, res) => {
         });
         fs.writeFileSync(saveTo, pngBuffer);
     } else {
-      const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
       file.pipe(fs.createWriteStream(saveTo));
     }
 
