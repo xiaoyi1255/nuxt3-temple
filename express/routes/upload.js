@@ -1,25 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
 const path = require('path');
+const Busboy = require('busboy')
+const fs = require('fs')
 
-// 设置图片上传的目标目录
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '../public/imgs')); // 设置图片保存路径为 public/imgs
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-    }
+router.post('/imgs', (req, res) => {
+  const busboy = Busboy({ headers: req.headers });
+  let _fileName = ''
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    const names = filename.filename.split('.')
+    const preName = names[0] + '-';
+    _fileName = new Date().getTime() + '.' + names[1]
+    const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
+    file.pipe(fs.createWriteStream(saveTo));
   });
-  
-const upload = multer({ storage });
 
-router.post('/', upload.single('image'), (req, res) => {
-  console.log('上传图片。。。', req)
-  // req.file 是上传的文件对象
-  // 处理图片保存和生成链接的逻辑
+  busboy.on('finish', function () {
+    const resObj = {
+      msg: '发送成功',
+      url: 'http://localhost:3000/uploads/' + _fileName
+    }
+    console.log('文件上传：', _fileName)
+    res.send(resObj);
+  });
+  return req.pipe(busboy);
 });
 
 

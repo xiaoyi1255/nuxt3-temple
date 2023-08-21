@@ -5,7 +5,19 @@ const app = express();
 const cors = require('cors'); // 导入 cors 中间件
 const uploadRoutes = require('./routes/upload.js');
 
-
+app.use(express.static('public'));
+// 自定义中间件，设置强制缓存头部
+app.use('public', (req, res, next) => {
+	// 设置 Cache-Control 头部，max-age 表示缓存时间（以秒为单位）
+	res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 小时的缓存
+  
+	// 设置 Expires 头部，表示资源过期时间
+	const expireDate = new Date();
+	expireDate.setHours(expireDate.getHours() + 12); // 1 小时后过期
+	res.setHeader('Expires', expireDate.toUTCString());
+  
+	next();
+  });
 app.use(cors())
 const roomMap = new Map();
 // 创建 HTTP 服务器
@@ -82,7 +94,8 @@ server.on('upgrade', (request, socket, head) => {
 		case '/ws':
 			// 只允许 这个主机下的请求访问
 			if (
-				request.headers.origin.includes('118.89.125.27')
+				// request.headers.origin.includes('118.89.125.27')
+				request.headers.origin.includes('localhost')
 			) {
 				console.log(
 					'request.headers.origin111',
