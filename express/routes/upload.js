@@ -11,15 +11,20 @@ router.post('/imgs', (req, res) => {
   busboy.on('file', async(fieldname, file, filename, encoding, mimetype) => {
     const names = filename.filename.split('.')
     const preName = names[0] + '-';
-    _fileName = new Date().getTime() + '.' + 'png'
-    const arrayBuffer = await file.arrayBuffer();
-      const pngBuffer = await heicConvert({
-        buffer: arrayBuffer,
-        format: 'PNG',
-      });
+    _fileName = new Date().getTime() + '.' + names[1]
+    if (names[1] == 'heic') {
+      _fileName = new Date().getTime() + '.' + 'png'
+      const arrayBuffer = await file.arrayBuffer();
+        const pngBuffer = await heicConvert({
+          buffer: arrayBuffer,
+          format: 'PNG',
+        });
+        fs.writeFileSync(saveTo, pngBuffer);
+    } else {
+      const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
+      file.pipe(fs.createWriteStream(saveTo));
+    }
 
-    const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
-    file.pipe(fs.createWriteStream(saveTo, pngBuffer));
   });
 
   busboy.on('finish', function () {
