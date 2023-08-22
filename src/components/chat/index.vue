@@ -38,4 +38,7 @@ Button {
   padding: 5px;
   margin: 0 5px;
 }
+:where(.css-dev-only-do-not-override-eq3tly).ant-image-preview-root .ant-image-preview-wrap {
+    background-color: rgba(0, 0, 0, 0.9);
+}
 </style>
