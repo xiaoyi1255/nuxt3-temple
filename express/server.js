@@ -47,7 +47,6 @@ app.use('/upload', uploadRoutes)
 
 // 在 Express 中处理除了 /ws 路由以外的请求
 app.get('/getAllRoomInfo', (req, res) => {
-	// 设置允许访问的源（可以是具体的域名、端口、协议，或者使用 * 允许所有源）
 	if (!roomMap.size) {
 		return res.send(JSON.stringify([]));
 	}
@@ -85,9 +84,11 @@ app.post('/updateInfo', (req, res) => {
 });
 
 app.get('/getRoomInfoByRoomId', (req, res) => {
-	const { roomId } = req.query;
-	if (!roomMap.size || !roomMap.get(roomId || !roomId)) {
-		return res.send(JSON.stringify({}));
+	const { roomId: _roomId } = req.query;
+	const roomId = Number(_roomId)
+	console.log('getRoomInfoByRoomId：', roomId)
+	if (!roomId || !roomMap.size || !roomMap.get(roomId)) {
+		return res.send('');
 	}
 	const roomInfo = roomMap.get(roomId);
 	res.send(roomInfo);
@@ -97,6 +98,7 @@ server.on('upgrade', (request, socket, head) => {
 		case '/ws':
 			// 只允许 这个主机下的请求访问
 			if (
+				// true||
 				request.headers.origin.includes('118.89.125.27') ||
 				request.headers.origin.includes('localhost')
 			) {
@@ -198,9 +200,10 @@ function wsHandles() {
 				const currentRoom = roomMap.get(roomId)
 				if (currentRoom) {
 					const msgInfo = {
+						...msg,
 						name, id, roomId,type,
 						text: msg.text,
-						code: msg.code
+						code: msg.code,
 					}
 					if (currentRoom?.messageList) {
 						roomMap.get(roomId)?.messageList.push(msgInfo)

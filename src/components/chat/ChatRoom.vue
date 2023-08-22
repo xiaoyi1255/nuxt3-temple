@@ -5,6 +5,7 @@
     
     <p>在线人数{{ usersInfo.activityUsers }}</p>
     <p>当前房间人数：{{ usersInfo.users }}</p>
+    <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
     <div class="message">
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
         <div v-if="item.imgSrc" class="msg msg-img">
@@ -25,12 +26,14 @@
       <div class="submit" @click="sendMessage">发送</div>
     </div>
   </div>
+  <RoomInfoModel :roomInfo="roomInfo" :show="roomInfoShow" @changeShow="changeRoomInfoShow" />
 </template>
 
 <script setup>
 import { message as Message, Button, Image } from 'ant-design-vue'
 import Upload  from '../upload/index.vue'
 import { config } from '@/baseConfig'
+import RoomInfoModel from './model/InfoModel.vue'
 
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
@@ -41,6 +44,9 @@ const usersInfo = reactive({
   activityUsers: 0,
   users: 0
 })
+const roomInfo = ref({})
+const roomInfoShow = ref(false)
+const roomInfoLoading = ref(false)
 const receivedMessages = ref([]);
 let socket = null;
 
@@ -141,6 +147,33 @@ const onLoadHandle = () => {
 
 const getImgSrc = (url='') =>  config.baseUrl + url
 
+const getRoomInfo = async () => {
+  if (!props.state?.roomId) {
+    Message.warn('房间号丢失....')
+  }
+  try {
+    roomInfoLoading.value = true
+    const data = await $fetch(`${config.baseUrl}/getRoomInfoByRoomId`,{
+      method: "GET",
+      query: {
+        t: +new Date(),
+        roomId: props.state.roomId
+      }
+    })
+    if (data) {
+      roomInfo.value = data
+      changeRoomInfoShow(true)
+    }
+    roomInfoLoading.value = false
+  } catch (error) {
+    roomInfoLoading.value = false
+    
+  }
+  console.log('roomInfo', roomInfo)
+}
+const changeRoomInfoShow = ( flag = false) => {
+  roomInfoShow.value = flag
+}
 onMounted(() => {
   connectWebSocket();
   window.addEventListener('beforeunload', onLoadHandle)

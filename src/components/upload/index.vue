@@ -4,7 +4,6 @@
       name="file"
       :action= "`${config?.baseUrl}/upload/imgs`"
       :headers="headers"
-      accept="image/*,"
       enctype="multipart/form-data"
       :showUploadList="false"
       @change="handleChange"
