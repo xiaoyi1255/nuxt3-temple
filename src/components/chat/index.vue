@@ -1,7 +1,7 @@
 <template>
     <!-- <client-only placeholder="loading...">
     </client-only> -->
-    <Upload />
+    <!-- <Upload /> -->
     <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
     <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
 </template>
@@ -9,7 +9,7 @@
 <script lang="ts" setup>
 import ChatRoom from './ChatRoom.vue'
 import CreateChat  from './CreateChat.vue'
-import Upload  from '../upload/index.vue'
+// import Upload  from '../upload/index.vue'
 
 const state = reactive({
     name: '',
