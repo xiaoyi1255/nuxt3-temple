@@ -1,4 +1,4 @@
-let dev = true
+let dev = false
 
 const config = {
     baseUrl: 'http://118.89.125.27:3000',
