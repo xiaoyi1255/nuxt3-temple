@@ -9,7 +9,8 @@
     <div class="message">
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
         <div v-if="item.imgSrc" class="msg msg-img">
-          <Image :src="getImgSrc(item.imgSrc)" alt="" />
+          <Image v-if="imageFormats.includes(item.imgSrc.split('.')[1])" :src="getImgSrc(item.imgSrc)" alt="" />
+          <a v-else :href="getImgSrc(item.imgSrc)">{{item.imgSrc?.split('.')?.[1]}}</a>
         </div>
         <p class="msg" v-else>
           {{ item.text }}
@@ -37,6 +38,9 @@ import RoomInfoModel from './model/InfoModel.vue'
 
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
+
+const imageFormats = ref(['jpg','jpeg','png','gif','bmp','webp','svg','tiff','tif','heic','heif']);
+
 const connected = ref(false);
 const message = ref('');
 const usersInfo = reactive({
