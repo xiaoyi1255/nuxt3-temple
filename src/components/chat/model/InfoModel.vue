@@ -6,7 +6,8 @@
             <div class="name">{{ item.name }}:</div>
             <div class="content">
                 <div v-if="item.type==='upload'">
-                    <Image :src="getImgSrc(item.imgSrc)" />
+                    <Image v-if="imageFormats.includes(item.imgSrc.split('.')[1])" :src="getImgSrc(item.imgSrc)" alt="" />
+                    <a v-else :href="getImgSrc(item.imgSrc)" target="_blank">{{item.imgSrc?.split('.')?.[1]}}</a>
                 </div>
                 <div v-else>
                     {{ item.text }}
@@ -32,6 +33,9 @@ const props = defineProps({
         default: false
     }
 })
+
+const imageFormats = ref(['jpg','jpeg','png','gif','bmp','webp','svg','tiff','tif','heic','heif']);
+
 const state = reactive({
     title: '房间信息: ' + props.roomInfo?.roomId,
 

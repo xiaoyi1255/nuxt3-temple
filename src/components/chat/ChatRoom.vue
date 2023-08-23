@@ -10,7 +10,7 @@
       <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
         <div v-if="item.imgSrc" class="msg msg-img">
           <Image v-if="imageFormats.includes(item.imgSrc.split('.')[1])" :src="getImgSrc(item.imgSrc)" alt="" />
-          <a v-else :href="getImgSrc(item.imgSrc)">{{item.imgSrc?.split('.')?.[1]}}</a>
+          <a v-else :href="getImgSrc(item.imgSrc)" target="_blank">{{item.imgSrc?.split('.')?.[1]}}</a>
         </div>
         <p class="msg" v-else>
           {{ item.text }}
