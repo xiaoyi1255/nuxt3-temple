@@ -4,9 +4,11 @@
   <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
 
   <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
-    <input type="number" v-model.trim="state.room" :maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
-    <input style="margin-top: 2vh; display: block" :maxlength="8" v-model.trim="state.name" @keyup.enter="handleOk"
+    <InputNumber style="margin-top: 2vh; display: block;width: 100%;" v-model:value="state.room" maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
+    <Input style="margin-top: 2vh; display: block;width: 100%;" maxlength="8" v-model:value="state.name" @keyup.enter="handleOk"
       placeholder="请输入姓名" />
+    <InputNumber style="margin-top: 2vh; display: block;width: 100%;" maxlength="6" v-model:value="state.password" @keyup.enter="handleOk"
+      placeholder="(选填)请输入密码6位数字" />
   </Modal>
 
   <Modal v-if="state.roomListShow" v-model:open="state.roomListShow" title="房间列表" @ok="close">
@@ -38,11 +40,12 @@ type DataType = {
   }[];
   socket: any;
   name: string;
+  password: number
   type: string
   loading: boolean
 };
 
-import { Button, Input, message, Modal } from "ant-design-vue";
+import { Button, Input, message, Modal, InputPassword, InputNumber } from "ant-design-vue";
 import { config } from '@/baseConfig'
 
 const emit = defineEmits(['changeRoom'])
@@ -51,8 +54,9 @@ const state: DataType = reactive({
   roomShow: false,
   roomListShow: false,
   roomList: [],
-  room: '',
-  name: '',
+  room: 1111,
+  name: 'ass',
+  password: 123456,
   messages: [],
   socket: null,
   type: '',
@@ -69,8 +73,9 @@ const newRoom = (type) => {
   state.type = type
 };
 
-const handleOk = () => {
+const handleOk = async () => {
   const reg = /^\d{4}$/
+  const reg1 = /^\d{6}$/
   if (!state.room || !state.name) {
     message.error('请输入正确的房间号和名字')
     return
@@ -79,8 +84,54 @@ const handleOk = () => {
     message.error('请输入正确4位数字的房间号')
     return
   }
-  state.roomShow = false;
-  emit('changeRoom', { name: state.name, roomId: state.room, type: state.type })
+  if (!reg1.test(String(state.password))) {
+    message.error('请输入正确6位数字的密码')
+    return
+  }
+  const query = { name: state.name, roomId: state.room, type: state.type, password: state.password }
+  const res = await getRoomInfoByRoomId(query.roomId)
+  if (state.type === 'create') {
+    if(!res?.roomId) {
+      state.roomShow = false;
+      emit('changeRoom', query)
+    } else {
+      message.error(`房间号已存在：${state.room}`)
+    }
+  } else {
+    if(res?.roomId) {
+      if (res.password) { // 密码房
+        if (res.password == state.password) {
+          hasUser()
+        } else {
+          message.error(`密码错误请重新输入`)
+        }
+      } else {
+        hasUser()
+      }
+    } else {
+      message.error(`房间号不存在：${state.room}`)
+    }
+  }
+  function hasUser() {
+    let userInfo = {}
+    const hasUser = res.userList?.some(item => {
+      if (item.name === query.name ) {
+        userInfo = item
+        return true
+      }
+    })
+    if (hasUser) {
+      if(userInfo.active) { // 在线
+          message.error(`用户名已存在：${state.room}`)
+        } else {
+          state.roomShow = false;
+          emit('changeRoom', query)
+        }
+    } else {
+        state.roomShow = false;
+        emit('changeRoom', query)
+    }
+  }
 }
 const getRoomListInfo = () => {
   state.loading = true
@@ -95,6 +146,15 @@ const getRoomListInfo = () => {
   }).finally(() => {
     state.loading = false
   })
+}
+const getRoomInfoByRoomId = async (roomId=0) =>{
+    return $fetch(`${config.baseUrl}/getRoomInfoByRoomId`,{
+      method: "GET",
+      query: {
+        t: +new Date(),
+        roomId: roomId
+      }
+    })
 }
 const close = () => {
   state.roomListShow = false
@@ -137,12 +197,6 @@ Button {
   color: #007bff;
 }
 
-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
 .roomItem {
   background-color: #eee;
   padding: 2vh 1vh;

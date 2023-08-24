@@ -14,13 +14,15 @@ import CreateChat  from './CreateChat.vue'
 const state = reactive({
     name: '',
     roomId: 0,
-    type: ''
+    type: '',
+    password: ''
 })
 const changeRoom = (newInfo = {}) => {
     console.log(newInfo, 'asdsadsadasd')
     state.name = newInfo.name
     state.roomId = newInfo.roomId
     state.type = newInfo.type
+    state.password = newInfo.password
     const type = newInfo.type || ''
     if (type=='join' || type == 'create') {
         sessionStorage.setItem('userInfo', JSON.stringify(newInfo))

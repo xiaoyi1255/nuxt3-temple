@@ -77,7 +77,7 @@ app.get('/getRoomInfoByRoomId', (req, res) => {
 	const roomId = Number(_roomId)
 	console.log('getRoomInfoByRoomId：', roomId)
 	if (!roomId || !roomMap.size || !roomMap.get(roomId)) {
-		return res.send('');
+		return res.send({});
 	}
 	const roomInfo = roomMap.get(roomId);
 	res.send(roomInfo);
@@ -119,7 +119,7 @@ function wsHandles() {
 			message = message.toString();
 			const msg = JSON.parse(message);
 			msg.code = 200;
-			const { type, roomId, name, id } = msg || {};
+			const { type, roomId, name, id, password='' } = msg || {};
 			const room = roomMap.get(roomId);
 			const time = new Date().now
 			if (type == 'create') {
@@ -129,6 +129,7 @@ function wsHandles() {
 						createUser: name,
 						createTime: id,
 						serverTime: time,
+						password: password,
 						userList: [
 							{ name, jionTime: time, active: true }
 						],
