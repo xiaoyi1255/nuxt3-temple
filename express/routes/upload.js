@@ -65,7 +65,7 @@ function mkdirFolder(name='../public/uploads/') {
 
 
 // 定时任务，每天的凌晨执行
-cron.schedule('*0 0 * * *', () => { // '*/10 * * * * * 10秒
+cron.schedule('0 0 * * *', () => { // '*/10 * * * * * 10秒
   const targetFolderPath = path.join(__dirname, '../public/uploads'); // 替换为目标文件夹的路径
   try {
     fs.readdir(targetFolderPath, (err, files) => {
