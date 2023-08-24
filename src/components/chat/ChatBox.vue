@@ -1,7 +1,9 @@
 <template>
     <div class="item" :class=" !_isOwn ? 'item1':''">
         <div v-if="item.imgSrc" class="msg msg-img tc">
-            <Image v-if="item.fileType=='img'" :src="getImgSrc(item.imgSrc)" alt="" />
+            <div v-if="item.fileType=='img'" class="img">
+                <Image  :src="getImgSrc(item.imgSrc)" alt="" />
+            </div>
             <div v-else-if="item.fileType=='video'" class="video">
                 <video :ref="videoRef" id="video" @click="playVideo" :src="getImgSrc(item.imgSrc)" alt="" />
             </div>
@@ -110,6 +112,9 @@ const playVideo = () => {
 
 .time {
     font-size: 12px;
+}
+.img {
+    max-height: 25vh;
 }
 
 .video {

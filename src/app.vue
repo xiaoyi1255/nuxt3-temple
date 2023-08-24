@@ -15,4 +15,8 @@ body {
 :where(.css-dev-only-do-not-override-eq3tly).ant-message {
 	left: 0;
 }
+html,
+body {
+	scroll-behavior: smooth;
+}
 </style>

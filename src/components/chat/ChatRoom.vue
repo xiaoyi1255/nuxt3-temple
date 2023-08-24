@@ -6,7 +6,7 @@
     <p>在线人数{{ usersInfo.activityUsers }}</p>
     <p>当前房间人数：{{ usersInfo.users }}</p>
     <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
-    <div class="message">
+    <div class="message" ref="chat">
       <div v-for="item in receivedMessages" :key="item.id">
         <ChatBox :item="item" :isOwn="item.name==state.name" />
       </div>
@@ -41,6 +41,7 @@ const roomInfo = ref({})
 const roomInfoShow = ref(false)
 const roomInfoLoading = ref(false)
 const receivedMessages = ref([]);
+const chat = ref(null)
 let socket = null;
 
 const connectWebSocket = () => {
@@ -52,7 +53,7 @@ const connectWebSocket = () => {
     sendMessage(true)
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = async(event) => {
     const msg = JSON.parse(event.data);
     const { name, roomId } = props.state
     if (roomId == msg.roomId) {
@@ -68,6 +69,8 @@ const connectWebSocket = () => {
         exit()
       }
     }
+    await nextTick()
+    chat.value.scrollTop = chat.value.scrollHeight;
   };
   socket.onerror = (msg) => {
     console.log('errr')
@@ -170,6 +173,7 @@ const changeRoomInfoShow = ( flag = false) => {
 onMounted(() => {
   connectWebSocket();
   window.addEventListener('beforeunload', onLoadHandle)
+  chat.value.scrollTop = chat.value.scrollHeight;
 
 });
 </script>
@@ -210,7 +214,12 @@ Button {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 1vh;
+  padding-bottom: 5vh;
+
 }
+.message::-webkit-scrollbar{
+  display: none
+};
 
 .item {
   margin-bottom: 10px;
