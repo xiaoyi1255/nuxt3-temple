@@ -52,6 +52,13 @@
   const handleBeforeUpload = async (file:any) => {
     loading.value = true
     console.log(file.name, 'file===>>>>>')
+    // 文件大小判断
+    if (file.size > 1024 * 1024 * 50) {
+      message.error('请选择小于50M的文件')
+      loading.value = false
+      return false
+    }
+
     if (file.name.includes('.heic')) {
       try {
           const pngBlob = await heic2any({
@@ -65,6 +72,8 @@
         } catch (error) {
           console.error('Error converting HEIC to PNG:', error);
           message.error('Failed to convert HEIC to PNG');
+          loading.value = false
+
           return false; // Prevent upload
         }
     }
