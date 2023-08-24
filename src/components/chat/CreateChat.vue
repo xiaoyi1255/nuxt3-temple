@@ -40,12 +40,12 @@ type DataType = {
   }[];
   socket: any;
   name: string;
-  password: number
+  password: number | ''
   type: string
   loading: boolean
 };
 
-import { Button, Input, message, Modal, InputPassword, InputNumber } from "ant-design-vue";
+import { Button, Input, message, Modal, InputNumber } from "ant-design-vue";
 import { config } from '@/baseConfig'
 
 const emit = defineEmits(['changeRoom'])
@@ -84,7 +84,7 @@ const handleOk = async () => {
     message.error('请输入正确4位数字的房间号')
     return
   }
-  if (!reg1.test(String(state.password))) {
+  if (state.password && !reg1.test(String(state.password))) {
     message.error('请输入正确6位数字的密码')
     return
   }
