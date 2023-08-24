@@ -30,13 +30,14 @@
 
   const emit = defineEmits(['uploadSucess'])
   const handleChange = (info: UploadChangeParam) => {
+    console.log(info.file)
     if (info.file.status !== 'uploading') {
       console.log(info.file, info.fileList);
     }
     if (info.file.status === 'done') {
       // message.success(`${info.file.name} 发送成功`);
       loading.value = false
-      emit('uploadSucess', info.file?.response?.url)
+      emit('uploadSucess', {imgSrc: info.file?.response?.url, fileType: info.file?.response?.fileType, fileName: info.file.name})
     } else if (info.file.status === 'error') {
       message.error(`${info.file.name} 发送失败`);
       loading.value = false

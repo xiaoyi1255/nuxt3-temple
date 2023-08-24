@@ -1,25 +1,17 @@
 <template>
     <Modal v-if="vShow" v-model:open="vShow" :title="state.title" @ok="handleOk">
-        <div>房主：{{ roomInfo.createUser }}</div>
-        <div>创建时间：{{ new Date(roomInfo.createTime).toLocaleString() }}</div>
-        <div class="item" v-for="(item, index) in roomInfo.messageList">
-            <div class="name">{{ item.name }}:</div>
-            <div class="content">
-                <div v-if="item.type==='upload'">
-                    <Image v-if="imageFormats.includes(item.imgSrc.split('.')[1])" :src="getImgSrc(item.imgSrc)" alt="" />
-                    <a v-else :href="getImgSrc(item.imgSrc)" target="_blank">{{item.imgSrc?.split('.')?.[1]}}</a>
-                </div>
-                <div v-else>
-                    {{ item.text }}
-                </div>
-            </div>
+        <div>房主：<span>{{ roomInfo.createUser }}</span></div>
+        <div>创建时间：<span>{{ new Date(roomInfo.createTime).toLocaleString() }}</span></div>
+        <div v-for="(item, index) in roomInfo.messageList" :key="index">
+            <ChatBox :item="item" :isOwn="item.name ==name" />
         </div>
     </Modal>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Modal, Image } from "ant-design-vue";
+import { Modal } from "ant-design-vue";
+import ChatBox from '../ChatBox.vue';
 import { config } from '@/baseConfig'
 
 const emit = defineEmits(['changeShow'])
@@ -31,10 +23,12 @@ const props = defineProps({
     show: {
         type: Boolean,
         default: false
+    },
+    name: {
+        type: String,
+        default: ''
     }
 })
-
-const imageFormats = ref(['jpg','jpeg','png','gif','bmp','webp','svg','tiff','tif','heic','heif']);
 
 const state = reactive({
     title: '房间信息: ' + props.roomInfo?.roomId,
@@ -62,6 +56,10 @@ const getImgSrc = (url='') =>  config.baseUrl + url
         color: rgb(59, 42, 136);
         font-weight: 700;
     }
+}
+span {
+    color: rgb(59, 42, 136);
+    font-weight: 700;
 }
 
 </style>

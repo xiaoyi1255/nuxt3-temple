@@ -7,18 +7,8 @@
     <p>当前房间人数：{{ usersInfo.users }}</p>
     <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
     <div class="message">
-      <div class="item" :class="item.name==state.name? '':'item1'" v-for="item in receivedMessages" :key="item.id">
-        <div v-if="item.imgSrc" class="msg msg-img">
-          <Image v-if="imageFormats.includes(item.imgSrc.split('.')[1])" :src="getImgSrc(item.imgSrc)" alt="" />
-          <a v-else :href="getImgSrc(item.imgSrc)" target="_blank">{{item.imgSrc?.split('.')?.[1]}}</a>
-        </div>
-        <p class="msg" v-else>
-          {{ item.text }}
-        </p>
-        <div class="user">
-          <div class="time">{{ new Date(item.id).toLocaleTimeString() }}</div>
-          <div class="user">{{ item.name }}</div>
-        </div>
+      <div v-for="item in receivedMessages" :key="item.id">
+        <ChatBox :item="item" :isOwn="item.name==state.name" />
       </div>
     </div>
     <div v-if="connected" style="padding: 2vh 0;width: 80vw;overflow: hidden;">
@@ -27,19 +17,18 @@
       <div class="submit" @click="sendMessage">发送</div>
     </div>
   </div>
-  <RoomInfoModel :roomInfo="roomInfo" :show="roomInfoShow" @changeShow="changeRoomInfoShow" />
+  <RoomInfoModel :roomInfo="roomInfo" :show="roomInfoShow" @changeShow="changeRoomInfoShow" :name="state.name" />
 </template>
 
 <script setup>
-import { message as Message, Button, Image } from 'ant-design-vue'
+import { message as Message, Button } from 'ant-design-vue'
 import Upload  from '../upload/index.vue'
 import { config } from '@/baseConfig'
 import RoomInfoModel from './model/InfoModel.vue'
+import ChatBox from './ChatBox.vue';
 
 const props = defineProps(['state'])
 const emit = defineEmits(['changeRoom'])
-
-const imageFormats = ref(['jpg','jpeg','png','gif','bmp','webp','svg','tiff','tif','heic','heif']);
 
 const connected = ref(false);
 const message = ref('');
@@ -100,12 +89,12 @@ const reConnectWebSocket = () => {
   connectWebSocket()
 }
 let flag = false
-const sendMessage = (type = '', imgSrc='') => {
+const sendMessage = (type = '', file={}) => {
   if (!socket) return;
   const state = {...props.state}
   const messageObj = {
     ...state,
-    imgSrc,
+    ...file,
     text: message.value,
     id: Date.now(),
     
@@ -123,8 +112,8 @@ const sendMessage = (type = '', imgSrc='') => {
   message.value = '';
 };
 
-const uploadSucess = (fileUrl='') => {
-  sendMessage('upload', fileUrl)
+const uploadSucess = (file={}) => {
+  sendMessage('upload', file)
 }
 
 const exit = (state = {} ) => {
@@ -149,7 +138,6 @@ const onLoadHandle = () => {
     exit()
 }
 
-const getImgSrc = (url='') =>  config.baseUrl + url
 
 const getRoomInfo = async () => {
   if (!props.state?.roomId) {
@@ -178,6 +166,7 @@ const getRoomInfo = async () => {
 const changeRoomInfoShow = ( flag = false) => {
   roomInfoShow.value = flag
 }
+
 onMounted(() => {
   connectWebSocket();
   window.addEventListener('beforeunload', onLoadHandle)
@@ -216,6 +205,7 @@ Button {
 
 .message {
   overflow-y: auto;
+  max-height: 60vh;
   margin-top: 2vh;
   padding: 10px;
   border: 1px solid #ccc;
@@ -229,45 +219,6 @@ Button {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  .msg {
-    color: #fff;
-    padding: 1vw;
-    margin-right: 1vh;
-    max-width: 60vw;
-    height: 100%;
-    overflow: hidden;
-    background-color: #5d46da;
-    border: 1px solid #eee;
-    border-radius: 2vh;
-    order: 1;
-  }
-  .msg-img {
-    width: 30vh;
-    padding: 0;
-    background-color: transparent;
-  }
-  .user {
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-endd;
-    flex-direction: column;
-    order: 2;
-    
-  }
-}
-.item1 {
-  justify-content: flex-start;
-  .user {
-    order: 2;
-    align-items: flex-start;
-  }
-  .msg {
-    order: 3;
-    margin-left: 1vh;
-    margin-right: 0;
-    background-color: #7dad6a;
-
-  }
 }
 
 .submit {
@@ -292,6 +243,13 @@ Button {
 }
 .time {
   font-size: 12px;
+}
+.video {
+  width: 31vh;
+  video {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
 
