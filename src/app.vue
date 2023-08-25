@@ -5,18 +5,25 @@
 		</NuxtLayout>
 	</div>
 </template>
+<script setup>
+import { message } from 'ant-design-vue'
+
+message.config({
+	duration: 2,
+	maxCount: 2,
+	rtl: true,
+	prefixCls: '_message_'
+
+})
+</script>
+
 <style>
+._message_{
+	left: 0;
+}
 body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	/* padding-top: 300px; */
-}
-:where(.css-dev-only-do-not-override-eq3tly).ant-message {
-	left: 0;
-}
-html,
-body {
-	scroll-behavior: smooth;
 }
 </style>

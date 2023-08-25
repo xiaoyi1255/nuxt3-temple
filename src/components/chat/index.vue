@@ -4,6 +4,7 @@
     <!-- <Upload /> -->
     <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
     <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
+    <!-- <ChatTest /> -->
 </template>
 
 <script lang="ts" setup>
