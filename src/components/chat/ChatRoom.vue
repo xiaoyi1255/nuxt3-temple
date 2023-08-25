@@ -220,7 +220,7 @@ Button {
 
 .message {
   overflow-y: auto;
-  height: 45vh;
+  height: 60vh;
   margin-top: 2vh;
   padding: 2vh 0 0 0;
   border: none;
