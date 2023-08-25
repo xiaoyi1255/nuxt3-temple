@@ -83,6 +83,8 @@ const playVideo = () => {
         justify-content: flex-end;
         align-items: flex-endd;
         flex-direction: column;
+        width: 6vh;
+        overflow: hidden;
         order: 2;
 
     }
@@ -94,6 +96,8 @@ const playVideo = () => {
         order: 2;
         align-items: flex-start ;
         justify-content: flex-start;
+        width: 6vh;
+        overflow: hidden;
     }
 
     .msg {

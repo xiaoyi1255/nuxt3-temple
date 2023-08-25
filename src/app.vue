@@ -18,6 +18,7 @@ message.config({
 </script>
 
 <style>
+@import url(./assets/style/mixin.less);
 ._message_{
 	left: 0;
 }

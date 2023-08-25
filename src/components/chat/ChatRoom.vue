@@ -1,19 +1,23 @@
 <template>
   <div class="chat-container">
-    <Button @click="exit(state)">退出房间</Button>
-    <p class="tc title">{{connected ? `房间号：${state.roomId}`: '加入房间失败'}} <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button></p>
+    <div class="dfsb aic top">
+      <Button @click="exit(state)">退出房间</Button>
+      <p class="tc title">{{connected ? `房间号${state.roomId}`: '加入房间失败'}} <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button></p>
+      <div>
+        <p>在线人数: {{ usersInfo.activityUsers }}</p>
+        <p>房间人数：{{ usersInfo.users }}</p>
+      </div>
+    </div>
     
-    <p>在线人数{{ usersInfo.activityUsers }}</p>
-    <p>当前房间人数：{{ usersInfo.users }}</p>
-    <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
     <div class="message" ref="chat">
       <div v-for="item in receivedMessages" :key="item.id">
         <ChatBox :item="item" :isOwn="item.name==state.name" />
       </div>
     </div>
-    <div v-if="connected" style="padding: 2vh 0;width: 80vw;overflow: hidden;">
+    <div v-if="connected" class="bottom">
       <Upload v-if="connected" @uploadSucess="uploadSucess" />
-      <textarea maxlength="100"  class="message-input" v-model="message" placeholder="输入消息..." />
+      <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
+      <Textarea :maxlength="100" @pressEnter="sendMessage" class="message-input" v-model:value="message" placeholder="回车发送消息..." />
       <div class="submit" @click="sendMessage">发送</div>
     </div>
   </div>
@@ -21,7 +25,7 @@
 </template>
 
 <script setup>
-import { message as Message, Button } from 'ant-design-vue'
+import { message as Message, Button, Textarea } from 'ant-design-vue'
 import Upload  from '../upload/index.vue'
 import { config } from '@/baseConfig'
 import RoomInfoModel from './model/InfoModel.vue'
@@ -93,7 +97,7 @@ const reConnectWebSocket = () => {
 }
 let flag = false
 const sendMessage = (type = '', file={}) => {
-  if (!socket) return;
+  if (!socket || !message.value?.trim()) return;
   const state = {...props.state}
   const messageObj = {
     ...state,
@@ -183,44 +187,57 @@ onMounted(() => {
 /* 样式可以根据您的需要进行自定义 */
 Button {
   padding: 5px;
-  margin: 0 5px;
 }
 .chat-container {
-  width: 80vw;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   margin: 0 auto;
   padding: 1vw;
   height: 100%;
+  font-size: 12px;
+  box-sizing: border-box;
   .title {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 900;
+  }
+  .top {
+    padding: 0 1vh;
   }
 }
 
 .message-input {
-  width: 80vw;
+  width: 100%;
   display: block;
-  min-height: 15vh;
+  height: 15vh;
   padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid #dbdbdb;
   box-sizing: border-box;
-  margin-top: 1vw;
+  outline: none;
 }
 
 .message {
   overflow-y: auto;
-  max-height: 60vh;
+  height: 45vh;
   margin-top: 2vh;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 1vh;
+  padding: 2vh 0 0 0;
+  border: none;
+  border-radius: 0;
+  border-top: 1px solid #dbdbdb;
   padding-bottom: 5vh;
 
 }
 .message::-webkit-scrollbar{
   display: none
 };
-
+.bottom {
+  width: 80vw;
+  overflow: hidden;
+  position: fixed;
+  bottom: 0;
+}
 .item {
   margin-bottom: 10px;
   padding: 5px 10px;
@@ -260,6 +277,20 @@ Button {
     height: 100%;
   }
 }
+</style>
+
+<style scoped lang="less">
+@media screen and (min-width:800px) {
+  .chat-container {
+    padding: 2vh 15vh;
+  }
+  .bottom {
+    width: 100%;
+    position: static;
+  }
+}
+
+
 </style>
 
   
