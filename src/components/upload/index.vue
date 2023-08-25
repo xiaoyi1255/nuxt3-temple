@@ -15,7 +15,7 @@
         </div>
         <div v-else>
           <upload-outlined></upload-outlined>
-          发送图片
+          发送文件
         </div>
       </Button>
     </Upload>
@@ -37,10 +37,12 @@
     if (info.file.status === 'done') {
       // message.success(`${info.file.name} 发送成功`);
       loading.value = false
+      message.destroy()
       emit('uploadSucess', {imgSrc: info.file?.response?.url, fileType: info.file?.response?.fileType, fileName: info.file.name})
     } else if (info.file.status === 'error') {
       message.error(`${info.file.name} 发送失败`);
       loading.value = false
+      message.destroy()
     }
   };
   const loading = ref(false)
@@ -51,6 +53,7 @@
 
   const handleBeforeUpload = async (file:any) => {
     loading.value = true
+    message.loading()
     console.log(file.name, 'file===>>>>>')
     // 文件大小判断
     if (file.size > 1024 * 1024 * 50) {

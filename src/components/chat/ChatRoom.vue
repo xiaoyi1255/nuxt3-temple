@@ -17,8 +17,8 @@
     <div v-if="connected" class="bottom">
       <Upload v-if="connected" @uploadSucess="uploadSucess" />
       <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
-      <Textarea :maxlength="100" @pressEnter="sendMessage" class="message-input" v-model:value="message" placeholder="回车发送消息..." />
-      <div class="submit" @click="sendMessage">发送</div>
+      <Textarea :maxlength="100" @pressEnter="sendMessage" class="message-input" v-model:value.trim="message" placeholder="回车发送消息..." />
+      <!-- <div class="submit" @click="sendMessage">发送</div> -->
     </div>
   </div>
   <RoomInfoModel :roomInfo="roomInfo" :show="roomInfoShow" @changeShow="changeRoomInfoShow" :name="state.name" />
@@ -97,7 +97,7 @@ const reConnectWebSocket = () => {
 }
 let flag = false
 const sendMessage = (type = '', file={}) => {
-  if (!socket || !message.value?.trim()) return;
+  if (!socket) return;
   const state = {...props.state}
   const messageObj = {
     ...state,
@@ -237,14 +237,7 @@ Button {
   overflow: hidden;
   position: fixed;
   bottom: 0;
-}
-.item {
-  margin-bottom: 10px;
-  padding: 5px 10px;
-
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  // transform: translateX(10vw);
 }
 
 .submit {

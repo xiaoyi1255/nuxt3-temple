@@ -1,9 +1,11 @@
 <template>
-    <Modal v-if="vShow" v-model:open="vShow" :title="state.title" @ok="handleOk">
+    <Modal v-if="vShow" v-model:open="vShow" :title="title" @ok="handleOk">
         <div>房主：<span>{{ roomInfo.createUser }}</span></div>
         <div>创建时间：<span>{{ new Date(roomInfo.createTime).toLocaleString() }}</span></div>
-        <div v-for="(item, index) in roomInfo.messageList" :key="index">
-            <ChatBox :item="item" :isOwn="item.name ==name" />
+        <div class="modal">
+            <div v-for="(item, index) in roomInfo.messageList" :key="index">
+                <ChatBox :item="item" :isOwn="item.name ==name" />
+            </div>
         </div>
     </Modal>
 </template>
@@ -12,7 +14,6 @@
 import { computed } from 'vue'
 import { Modal } from "ant-design-vue";
 import ChatBox from '../ChatBox.vue';
-import { config } from '@/baseConfig'
 
 const emit = defineEmits(['changeShow'])
 const props = defineProps({
@@ -30,10 +31,7 @@ const props = defineProps({
     }
 })
 
-const state = reactive({
-    title: '房间信息: ' + props.roomInfo?.roomId,
-
-})
+const title = computed(()=>{'房间信息: ' + props.roomInfo?.roomId});
 const vShow = computed({
     get(){
         return props.show
@@ -42,11 +40,20 @@ const vShow = computed({
         emit('changeShow', false)
     }
 })
-const getImgSrc = (url='') =>  config.baseUrl + url
+const handleOk = () => {
+    emit('changeShow', false)
+}
 
 </script>
 
 <style scoped lang="less">
+.modal {
+    height: 60vh;
+    overflow-y: scroll;
+}
+.modal::-webkit-scrollbar{
+    display: none;
+}
 .item {
     display: flex;
     align-items: center;

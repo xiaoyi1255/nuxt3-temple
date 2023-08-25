@@ -91,11 +91,11 @@ const playVideo = () => {
 }
 
 .item1 {
+    display: flex;
     justify-content: flex-start;
+    align-items: center;
     & > .user {
         order: 2;
-        align-items: flex-start ;
-        justify-content: flex-start;
         width: 6vh;
         overflow: hidden;
     }
