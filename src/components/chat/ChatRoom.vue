@@ -237,7 +237,7 @@ Button {
   overflow: hidden;
   position: fixed;
   bottom: 0;
-  // transform: translateX(10vw);
+  left: 10vw;
 }
 
 .submit {
