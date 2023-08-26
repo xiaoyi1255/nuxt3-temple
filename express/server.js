@@ -5,13 +5,18 @@ const app = express();
 const cors = require('cors'); // 导入 cors 中间件
 const uploadRoutes = require('./routes/upload.js');
 const path = require('path')
+const redisCkient = require('./utils/redis')
+let roomMap = new Map()
+redisCkient.get2Map().then(res => {
+	roomMap = res || new Map();
+
+})
 
 // 托管静态文件
 app.use('/static',express.static(path.join(__dirname,'./public'), {
 	maxAge: 1000 * 60 * 60 *24 * 7
 })) // 图片文件夹路径
 app.use(cors())
-const roomMap = new Map();
 // 创建 HTTP 服务器
 const server = http.createServer(app);
 // 创建 WebSocket 服务器
@@ -19,24 +24,11 @@ const wss = new WebSocket.Server({ noServer: true });
 
 wsHandles(); // websocket 监听器
 
-// 设置跨域响应头的中间件
-app.use((req, res, next) => {
-	// 允许所有源访问
-	res.header('Access-Control-Allow-Origin', '*');
-
-	// 设置其他CORS相关的响应头
-	res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-	res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-	res.header('Access-Control-Allow-Credentials', true);
-
-	// 继续处理下一个中间件或路由
-	next();
-});
 app.use('/upload', uploadRoutes)
 
 // 在 Express 中处理除了 /ws 路由以外的请求
-app.get('/getAllRoomInfo', (req, res) => {
-	if (!roomMap.size) {
+app.get('/getAllRoomInfo', async(req, res) => {
+	if (!redisCkient.size) {
 		return res.send(JSON.stringify([]));
 	}
 	const roomInfo = [];
@@ -46,7 +38,7 @@ app.get('/getAllRoomInfo', (req, res) => {
 	res.send(roomInfo);
 });
 
-app.post('/updateInfo', (req, res) => {
+app.post('/updateInfo', async(req, res) => {
 	// 设置允许访问的源（可以是具体的域名、端口、协议，或者使用 * 允许所有源）
 	const { name = '', roomId = 0 } = req.query;
 	if (roomId && name) {
@@ -59,8 +51,8 @@ app.post('/updateInfo', (req, res) => {
 			}
 		});
 		const msg = {text: name + '刷新啦，，在线人数要变', code: 200, name, roomId, type: 'update'}
+		await redisCkient.set2Map(roomMap)
 		wss.clients.forEach((client) => {
-			
 			if (client.readyState === WebSocket.OPEN) {
 				msg.users = roomInfo?.userList?.length || 0;
 				msg.totalUserList = roomInfo?.userList || []
@@ -115,7 +107,7 @@ function wsHandles() {
 	wss.on('connection', (socket) => {
 		console.log('WebSocket 连接已建立');
 		// 监听客户端发送的消息
-		socket.on('message', (message) => {
+		socket.on('message', async(message) => {
 			message = message.toString();
 			const msg = JSON.parse(message);
 			msg.code = 200;
@@ -207,6 +199,7 @@ function wsHandles() {
 			msg.totalUserList = roomMap.get(roomId)?.userList || []
 			msg.activityUsers = roomMap.get(roomId)?.userList?.filter(item => item.active)?.length
 			// 广播消息给所有连接的客户端
+			await redisCkient.set2Map(roomMap)
 			wss.clients.forEach((client) => {
 				if (client.readyState === WebSocket.OPEN) {
 					client.send(JSON.stringify(msg));

@@ -11,7 +11,8 @@
   "author": "xiaoyi",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev --dotenv .env.development --port=80",
+    "dev": "nuxt dev --port=80",
+    "serve": "node ./express/server.js --env dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -24,6 +25,7 @@
     "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "ioredis": "^5.3.2",
     "less": "^4.1.3",
     "node-cron": "^3.0.2",
     "nuxt": "^3.2.2",
