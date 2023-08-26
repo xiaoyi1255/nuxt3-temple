@@ -25,7 +25,17 @@ class RedisClient {
         return await this.redis.flushall()
     }
 
-	// 添加其他操作方法...
+	async getAllKeys (){
+		return await this.redis.keys('*')
+	}
+
+	async del(key){
+		return await this.redis.del(key)
+	}
+
+	async ttl(key) {
+		return this.redis.ttl(key)
+	}
 
 	async close() {
 		await this.redis.quit();
