@@ -105,8 +105,8 @@ const handleBeforeUpload = async (file: any) => {
           console.log(err)
           loading.value = false;
         }
-        md5Worker.onmessage = essageHandle
-        function essageHandle(e) {
+        md5Worker.onmessage = messageHandle
+        function messageHandle(e) {
             console.log(e.data, '接收到的MD5')
             if (e.data) {
               const md5 = e.data;
