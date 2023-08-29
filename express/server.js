@@ -11,7 +11,7 @@ redisCkient.get2Map().then(res => {
 	roomMap = res || new Map();
 
 })
-
+app.use(express.json());
 // 托管静态文件
 app.use('/static',express.static(path.join(__dirname,'./public'), {
 	maxAge: 1000 * 60 * 60 *24 * 7

@@ -27,6 +27,7 @@
   import type { UploadChangeParam } from 'ant-design-vue';
   import { config } from '@/baseConfig'
   import heic2any from 'heic2any';
+  import SparkMD5 from 'spark-md5'
 
   const emit = defineEmits(['uploadSucess'])
   const handleChange = (info: UploadChangeParam) => {
@@ -52,7 +53,7 @@
   };
 
   const handleBeforeUpload = async (file:any) => {
-    loading.value = true
+    // loading.value = true
     message.loading()
     console.log(file.name, 'file===>>>>>')
     // 文件大小判断
@@ -80,7 +81,66 @@
           return false; // Prevent upload
         }
     }
+    const chunks = createChunks(file, 1024* 1024)
+    const md5 = await createMd5(chunks) as string
+    const allRequest = chunks.map((item,index) => {
+      const formData = new FormData()
+      formData.append('chunk', item)
+      formData.append('filename', md5)
+      formData.append('name', index + '@'+md5)
+      return useFetch(`${config?.baseUrl}/upload/largeFile`, {
+        method: 'POST',
+        headers: {
+          // 'content-type': 'multipart/form-data'
+        },
+        body: formData
+      })
+    })
+
+    console.log(chunks, md5)
+    Promise.all(allRequest).then(res => {
+      console.log('所有分片上传成功')
+      $fetch(`${config?.baseUrl}/upload/mergeFile`, {
+        method:'POST',
+        query: {
+          fileName: md5,
+          extName: file.name.split('.').slice(-1)[0]
+        }
+      })
+    })
+    // return false
     return file
+  }
+
+  const createChunks = (file: File, chunksize: number) => {
+    const chunks = []
+    for (let i = 0; i < file.size; i+=chunksize) {
+      chunks.push(file.slice(i, i+chunksize))
+    }
+    return chunks
+  }
+
+  const createMd5 = (chunks: Blob[]) => {
+    const spark = new SparkMD5()
+    return new Promise((reslove=> {
+      function _read(i:number){
+        if (i>=chunks.length) {
+          const md5 = spark.end()
+          reslove(md5)
+          return
+        }
+        const blob = chunks[i]
+        const reader = new FileReader()
+  
+        reader.onload = (e) => {
+          const bytes = e?.target?.result
+          spark.append(bytes)
+          _read(i+1)
+        }
+        reader.readAsArrayBuffer(blob);
+      }
+      _read(0)
+    }))
   }
   
   </script>

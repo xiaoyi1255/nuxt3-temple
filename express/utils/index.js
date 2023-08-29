@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs')
+const cron = require('node-cron');
 
 
 const imageFormats = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'tiff', 'tif', 'heic', 'heif'];
@@ -39,9 +40,105 @@ function mkdirFolder(name = '../public/uploads/') {
 
 }
 
+function creatTime() {
+    // 定时任务，每天的凌晨执行
+cron.schedule('0 0 * * *', () => { // '*/10 * * * * * 10秒
+    const targetFolderPath = path.join(__dirname, '../public/uploads'); // 替换为目标文件夹的路径
+    try {
+      fs.readdir(targetFolderPath, (err, files) => {
+        if (err) {
+          console.error('Error:', err);
+          return;
+        }
+  
+        // 对文件按照创建时间进行排序
+        files.sort((a, b) => {
+          const filePathA = path.join(targetFolderPath, a);
+          const filePathB = path.join(targetFolderPath, b);
+  
+          const statsA = fs.statSync(filePathA);
+          const statsB = fs.statSync(filePathB);
+  
+          return statsA.ctime.getTime() - statsB.ctime.getTime();
+        });
+        // const files = fs.readdirSync(targetFolderPath);
+  
+        files.forEach(file => {
+          const filePath = path.join(targetFolderPath, file);
+          try {
+            const stats = fs.statSync(filePath);
+            const fileSizeInBytes = stats.size;
+            const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
+            if (fileSizeInGB > 2) {
+              fs.unlinkSync(filePath); // 删除文件
+              console.log('File deleted:', filePath);
+            }
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  });
+  
+}
+
+/**
+ * 文件合并
+ * @param {*} sourceFiles 源文件
+ * @param {*} targetFile  目标文件
+ */
+function thunkStreamMerge(sourceFiles, targetFile) {
+    const thunkFilesDir = sourceFiles
+    targetFile = path.join(__dirname, targetFile) ;
+    const _thunkFilesDir = path.join(__dirname, sourceFiles) ;
+    console.log(thunkFilesDir, '============')
+    const list = fs.readdirSync(_thunkFilesDir); // 读取目录中的文件
+    const fileList = list
+      .sort((a, b) => a.split('@')[0] * 1 - b.split('@')[0] * 1)
+      .map((name) => ({
+        name,
+        filePath: path.resolve(thunkFilesDir, name),
+      }));
+    const fileWriteStream = fs.createWriteStream(targetFile);
+    thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
+  }
+  
+  /**
+   * 合并每一个切片
+   * @param {*} fileList        文件数据
+   * @param {*} fileWriteStream 最终的写入结果
+   * @param {*} sourceFiles     文件路径
+   */
+  function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles) {
+    if (!fileList.length) {
+      // thunkStreamMergeProgress(fileList)
+      fileWriteStream.end('完成了');
+      // 删除临时目录
+      if (sourceFiles)
+        fs.rmdirSync(sourceFiles, { recursive: true, force: true });
+      return;
+    }
+    const data = fileList.shift(); // 取第一个数据
+    const { filePath: chunkFilePath } = data;
+    const currentReadStream = fs.createReadStream(chunkFilePath); // 读取文件
+    // 把结果往最终的生成文件上进行拼接
+    currentReadStream.pipe(fileWriteStream, { end: false });
+    currentReadStream.on('end', () => {
+      // console.log(chunkFilePath);
+      // 拼接完之后进入下一次循环
+      thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
+    });
+  }
+
 module.exports = {
     formatDateTime,
     mkdirFolder,
     imageFormats,
     videoFormats,
+    thunkStreamMerge,
+    thunkStreamMergeProgress
+
 }

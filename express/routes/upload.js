@@ -1,14 +1,16 @@
 const express = require('express');
 const Busboy = require('busboy')
-const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs')
+const multiparty = require("multiparty")
 const router = express.Router();
 const {
   formatDateTime,
   mkdirFolder,
   imageFormats,
-  videoFormats
+  videoFormats,
+  thunkStreamMerge,
+  thunkStreamMergeProgress
 } = require('../utils/index.js')
 
 
@@ -43,48 +45,48 @@ router.post('/imgs', (req, res) => {
   return req.pipe(busboy);
 });
 
-
-// 定时任务，每天的凌晨执行
-cron.schedule('0 0 * * *', () => { // '*/10 * * * * * 10秒
-  const targetFolderPath = path.join(__dirname, '../public/uploads'); // 替换为目标文件夹的路径
-  try {
-    fs.readdir(targetFolderPath, (err, files) => {
-      if (err) {
-        console.error('Error:', err);
-        return;
-      }
-
-      // 对文件按照创建时间进行排序
-      files.sort((a, b) => {
-        const filePathA = path.join(targetFolderPath, a);
-        const filePathB = path.join(targetFolderPath, b);
-
-        const statsA = fs.statSync(filePathA);
-        const statsB = fs.statSync(filePathB);
-
-        return statsA.ctime.getTime() - statsB.ctime.getTime();
+router.post('/largeFile', (req, res) => {
+  const form = new multiparty.Form();
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      console.log(err)
+      res.json({
+        code: 0,
+        data: {},
       });
-      // const files = fs.readdirSync(targetFolderPath);
-
-      files.forEach(file => {
-        const filePath = path.join(targetFolderPath, file);
-        try {
-          const stats = fs.statSync(filePath);
-          const fileSizeInBytes = stats.size;
-          const fileSizeInGB = fileSizeInBytes / (1024 * 1024 * 1024);
-          if (fileSizeInGB > 2) {
-            fs.unlinkSync(filePath); // 删除文件
-            console.log('File deleted:', filePath);
-          }
-        } catch (error) {
-          console.error('Error:', error);
-        }
+    } else {
+      const savePath = path.join(__dirname, '../public/uploads/thunk/' + fields['filename'][0])
+      fs.mkdirSync(savePath, {
+        recursive: true,
+      }); // 把每一次上传的切片数据进行统一的存储
+      // 转存
+      console.log(files['chunk'][0].path)
+      console.log(fields['name'][0])
+      fs.renameSync(
+        files['chunk'][0].path,
+        savePath + '/' +
+          fields['name'][0]
+      );
+      res.json({
+        code: 1,
+        data: '上传切片成功',
       });
-    });
-  } catch (error) {
-    console.error('Error:', error);
-  }
-});
+    }
+  });
+})
+
+router.post('/mergeFile', (req, res) => {
+  const { fileName , extName  } = req.query
+  thunkStreamMerge(
+    '../public/uploads/thunk/' + fileName,
+    '../public/uploads/' + fileName + '.' + extName
+  );
+  res.json({
+    code: 1,
+    data: '/public/uploads/' + fileName + '.' + extName,
+  });
+})
+
 
 
 
