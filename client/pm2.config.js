@@ -12,7 +12,7 @@ module.exports = {
         port: '3000',
         instances: 7,
         exec_mode: 'cluster',
-        script: './express/server.js'
+        script: '../express/server.js'
       }
     ]
   }
