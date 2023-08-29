@@ -25,7 +25,7 @@ useHead({
   align-items: center;
   justify-content: center;
   /* flex-direction: column; */
-  margin: 10vh 0;
+  /* margin: 10vh 0; */
 }
 
 </style>
