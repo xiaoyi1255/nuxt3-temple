@@ -1,9 +1,9 @@
 <template>
     <!-- <client-only placeholder="loading...">
     </client-only> -->
-    <!-- <Upload /> -->
     <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
     <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
+    <!-- <Upload :is-large="true" /> -->
     <!-- <ChatTest /> -->
 </template>
 

@@ -2,18 +2,21 @@ const express = require('express');
 const Busboy = require('busboy')
 const path = require('path');
 const fs = require('fs')
-const multiparty = require("multiparty")
+// const multiparty = require("multiparty")
 const router = express.Router();
 const {
   formatDateTime,
   mkdirFolder,
   imageFormats,
   videoFormats,
-  thunkStreamMerge,
-  thunkStreamMergeProgress
+  creatTime
 } = require('../utils/index.js')
 
+creatTime(20) // 清理数据
 
+/**
+ * 普通文件上传 50M 以内
+ */
 router.post('/imgs', (req, res) => {
   const busboy = Busboy({ headers: req.headers });
   let _fileName = ''
@@ -45,49 +48,107 @@ router.post('/imgs', (req, res) => {
   return req.pipe(busboy);
 });
 
+/**
+ * 大文件上传： 分片
+ */
 router.post('/largeFile', (req, res) => {
-  const form = new multiparty.Form();
-  form.parse(req, (err, fields, files) => {
-    if (err) {
-      console.log(err)
-      res.json({
-        code: 0,
-        data: {},
-      });
-    } else {
-      const savePath = path.join(__dirname, '../public/uploads/thunk/' + fields['filename'][0])
-      fs.mkdirSync(savePath, {
-        recursive: true,
-      }); // 把每一次上传的切片数据进行统一的存储
-      // 转存
-      console.log(files['chunk'][0].path)
-      console.log(fields['name'][0])
-      fs.renameSync(
-        files['chunk'][0].path,
-        savePath + '/' +
-          fields['name'][0]
-      );
-      res.json({
-        code: 1,
-        data: '上传切片成功',
-      });
+  const busboy = Busboy({ headers: req.headers });
+  const { filename, name } = req.query
+  busboy.on('file', (req, (err, file, filds, encoding, mimetype) => {
+    try {
+      const dir = `../public/file/thunk/${name}`
+      const saveTo = path.join(__dirname, dir, filename);
+      mkdirFolder(dir)
+      console.log(saveTo)
+      file.pipe(fs.createWriteStream(saveTo));
+    } catch (error) {
+      console.log(error, 'err*---------')
+      const resObj = {
+        msg: '分片上传失败',
+        code: -1,
+        err: error
+      }
+      res.send(resObj);
     }
+  }));
+  busboy.on('finish', function () {
+    const resObj = {
+      msg: '分片上传成功',
+      code: 0,
+    }
+    res.send(resObj);
   });
+  return req.pipe(busboy);
 })
 
+/**
+ * 大文件
+ */
 router.post('/mergeFile', (req, res) => {
-  const { fileName , extName  } = req.query
+  const { fileName, extName } = req.query
   thunkStreamMerge(
-    '../public/uploads/thunk/' + fileName,
-    '../public/uploads/' + fileName + '.' + extName
+    '../public/file/thunk/' + fileName,
+    '../public/file/' + fileName + '.' + extName
   );
+  let fileType = extName
+  if (imageFormats.includes(extName)) {
+    fileType = 'img'
+  } else if (videoFormats.includes(extName)) {
+    fileType = 'video'
+  }
   res.json({
     code: 1,
-    data: '/public/uploads/' + fileName + '.' + extName,
+    url: '/static/file/' + fileName + '.' + extName,
+    fileType,
+    fileName
   });
 })
 
 
+/**
+ * 文件合并
+ * @param {*} sourceFiles 源文件
+ * @param {*} targetFile  目标文件
+ */
+function thunkStreamMerge(sourceFiles, targetFile) {
+  const thunkFilesDir = sourceFiles
+  targetFile = path.join(__dirname, targetFile);
+  const _thunkFilesDir = path.join(__dirname, sourceFiles);
+  const list = fs.readdirSync(_thunkFilesDir);
+  const fileList = list
+    .sort((a, b) => a.split('@')[1] * 1 - b.split('@')[1] * 1)
+    .map((name) => ({
+      name,
+      filePath: path.join(__dirname, thunkFilesDir, name),
+    }));
+  const fileWriteStream = fs.createWriteStream(targetFile);
+  thunkStreamMergeProgress(fileList, fileWriteStream, _thunkFilesDir);
+}
 
+/**
+ * 合并每一个切片
+ * @param {*} fileList        文件数据
+ * @param {*} fileWriteStream 最终的写入结果
+ * @param {*} sourceFiles     文件路径
+ */
+function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles) {
+  if (!fileList.length) {
+    fileWriteStream.end('完成了');
+    // 删除临时目录
+    if (sourceFiles) {
+      fs.rmdirSync(sourceFiles, { recursive: true, force: true });
+    }
+    return;
+  }
+  const data = fileList.shift(); // 取第一个数据
+  const { filePath: chunkFilePath } = data;
+  const currentReadStream = fs.createReadStream(chunkFilePath); // 读取文件
+  // 把结果往最终的生成文件上进行拼接
+  currentReadStream.pipe(fileWriteStream, { end: false });
+  currentReadStream.on('end', () => {
+    // 拼接完之后进入下一次循环
+    thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
+  });
+}
 
 module.exports = router;
