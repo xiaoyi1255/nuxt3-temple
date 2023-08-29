@@ -52,6 +52,7 @@ router.post('/imgs', (req, res) => {
  * 大文件上传： 分片
  */
 router.post('/largeFile', (req, res) => {
+  console.log(req.ip, 'ip')
   const busboy = Busboy({ headers: req.headers });
   const { filename, name } = req.query
   busboy.on('file', (req, (err, file, filds, encoding, mimetype) => {
@@ -132,23 +133,27 @@ function thunkStreamMerge(sourceFiles, targetFile) {
  * @param {*} sourceFiles     文件路径
  */
 function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles) {
-  if (!fileList.length) {
-    fileWriteStream.end('完成了');
-    // 删除临时目录
-    if (sourceFiles) {
-      fs.rmdirSync(sourceFiles, { recursive: true, force: true });
+  try {
+    if (!fileList.length) {
+      fileWriteStream.end('完成了');
+      // 删除临时目录
+      if (sourceFiles) {
+        fs.rmdirSync(sourceFiles, { recursive: true, force: true });
+      }
+      return;
     }
-    return;
+    const data = fileList.shift(); // 取第一个数据
+    const { filePath: chunkFilePath } = data;
+    const currentReadStream = fs.createReadStream(chunkFilePath); // 读取文件
+    // 把结果往最终的生成文件上进行拼接
+    currentReadStream.pipe(fileWriteStream, { end: false });
+    currentReadStream.on('end', () => {
+      // 拼接完之后进入下一次循环
+      thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
+    });
+  } catch (error) {
+    console.log(error)
   }
-  const data = fileList.shift(); // 取第一个数据
-  const { filePath: chunkFilePath } = data;
-  const currentReadStream = fs.createReadStream(chunkFilePath); // 读取文件
-  // 把结果往最终的生成文件上进行拼接
-  currentReadStream.pipe(fileWriteStream, { end: false });
-  currentReadStream.on('end', () => {
-    // 拼接完之后进入下一次循环
-    thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
-  });
 }
 
 module.exports = router;
