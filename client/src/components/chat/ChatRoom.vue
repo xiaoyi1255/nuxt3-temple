@@ -16,7 +16,6 @@
     </div>
     <div v-if="connected" class="bottom">
       <Upload @uploadSucess="uploadSucess" />
-      <Upload @uploadSucess="uploadSucess" :isLarge="state.roomId==8888" />
       <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
       <Textarea :maxlength="100" @pressEnter="sendMessage" class="message-input" v-model:value.trim="message" placeholder="回车发送消息..." />
       <!-- <div class="submit" @click="sendMessage">发送</div> -->

@@ -9,8 +9,11 @@ const {
   mkdirFolder,
   imageFormats,
   videoFormats,
-  creatTime
+  creatTime,
 } = require('../utils/index.js')
+const { checkFileExistsInFolder } = require('../utils/flie.js');
+const { thunkStreamMerge } = require('../utils/upload.js')
+
 
 creatTime(20) // 清理数据
 
@@ -54,20 +57,20 @@ router.post('/imgs', (req, res) => {
 router.post('/largeFile', (req, res) => {
   console.log(req.ip, 'ip')
   const busboy = Busboy({ headers: req.headers });
-  const { filename, name } = req.query
+  const { filename, name, index } = req.query
   busboy.on('file', (req, (err, file, filds, encoding, mimetype) => {
     try {
       const dir = `../public/file/thunk/${name}`
-      const saveTo = path.join(__dirname, dir, filename);
       mkdirFolder(dir)
-      console.log(saveTo)
+      const saveTo = path.join(__dirname, dir, filename);
       file.pipe(fs.createWriteStream(saveTo));
     } catch (error) {
       console.log(error, 'err*---------')
       const resObj = {
         msg: '分片上传失败',
         code: -1,
-        err: error
+        err: error,
+        index // 返回报错的是那个chunks
       }
       res.send(resObj);
     }
@@ -76,6 +79,7 @@ router.post('/largeFile', (req, res) => {
     const resObj = {
       msg: '分片上传成功',
       code: 0,
+      index,
     }
     res.send(resObj);
   });
@@ -85,8 +89,8 @@ router.post('/largeFile', (req, res) => {
 /**
  * 大文件
  */
-router.post('/mergeFile', (req, res) => {
-  const { fileName, extName } = req.query
+router.post('/mergeFile', async(req, res) => {
+  const { fileName, extName, filename } = req.query
   thunkStreamMerge(
     '../public/file/thunk/' + fileName,
     '../public/file/' + fileName + '.' + extName
@@ -97,63 +101,36 @@ router.post('/mergeFile', (req, res) => {
   } else if (videoFormats.includes(extName)) {
     fileType = 'video'
   }
+
   res.json({
     code: 1,
-    url: '/static/file/' + fileName + '.' + extName,
+    url: '/static/file/' + fileName,
     fileType,
     fileName
   });
 })
 
-
 /**
- * 文件合并
- * @param {*} sourceFiles 源文件
- * @param {*} targetFile  目标文件
+ * 校验文件是否已上传
+ * 1. redis fileList 是否存在该文件名
+ * 2. 静态服务上是否存在该文件
  */
-function thunkStreamMerge(sourceFiles, targetFile) {
-  const thunkFilesDir = sourceFiles
-  targetFile = path.join(__dirname, targetFile);
-  const _thunkFilesDir = path.join(__dirname, sourceFiles);
-  const list = fs.readdirSync(_thunkFilesDir);
-  const fileList = list
-    .sort((a, b) => a.split('@')[1] * 1 - b.split('@')[1] * 1)
-    .map((name) => ({
-      name,
-      filePath: path.join(__dirname, thunkFilesDir, name),
-    }));
-  const fileWriteStream = fs.createWriteStream(targetFile);
-  thunkStreamMergeProgress(fileList, fileWriteStream, _thunkFilesDir);
-}
-
-/**
- * 合并每一个切片
- * @param {*} fileList        文件数据
- * @param {*} fileWriteStream 最终的写入结果
- * @param {*} sourceFiles     文件路径
- */
-function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles) {
-  try {
-    if (!fileList.length) {
-      fileWriteStream.end('完成了');
-      // 删除临时目录
-      if (sourceFiles) {
-        fs.rmdirSync(sourceFiles, { recursive: true, force: true });
-      }
-      return;
-    }
-    const data = fileList.shift(); // 取第一个数据
-    const { filePath: chunkFilePath } = data;
-    const currentReadStream = fs.createReadStream(chunkFilePath); // 读取文件
-    // 把结果往最终的生成文件上进行拼接
-    currentReadStream.pipe(fileWriteStream, { end: false });
-    currentReadStream.on('end', () => {
-      // 拼接完之后进入下一次循环
-      thunkStreamMergeProgress(fileList, fileWriteStream, sourceFiles);
-    });
-  } catch (error) {
-    console.log(error)
+router.post('/verifyFile', async(req, res) => {
+  const { fileName, extName} = req.query
+  const isSave = checkFileExistsInFolder(fileName)
+  let fileType = extName
+  if (imageFormats.includes(extName)) {
+    fileType = 'img'
+  } else if (videoFormats.includes(extName)) {
+    fileType = 'video'
   }
-}
+  res.status(200).send({
+    code: 0,
+    fileType,
+    fileName,
+    url: isSave ? '/static/file/' + fileName : ''
+  })
+})
+
 
 module.exports = router;

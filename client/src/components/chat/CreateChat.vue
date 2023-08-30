@@ -1,7 +1,10 @@
 <template>
-  <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
-  <Button @click="newRoom('join')">{{ title.join }}</Button>
-  <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
+  <div style="margin-top: 20vh;">
+    <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
+    <Button @click="newRoom('join')">{{ title.join }}</Button>
+    <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
+
+  </div>
 
   <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
     <InputNumber style="margin-top: 2vh; display: block;width: 100%;" v-model:value="state.room" maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
