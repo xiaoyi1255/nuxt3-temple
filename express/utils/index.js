@@ -40,6 +40,10 @@ function mkdirFolder(name = '../public/uploads/') {
 
 }
 
+/**
+ * 创建定时任务
+ * @param {*} size 达到清理的大小 Gb
+ */
 function creatTime(size = 20) {
   // 定时任务，每天的凌晨执行
   cron.schedule('0 0 * * *', () => { // '*/10 * * * * * 10秒
@@ -85,12 +89,31 @@ function creatTime(size = 20) {
 
 }
 
+/**
+ * 判断两个数组元素是否相等（浅比较）
+ * @param {*} arr1 
+ * @param {*} arr2 
+ * @returns 
+ */
+function arraysAreEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
 
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 module.exports = {
   formatDateTime,
   mkdirFolder,
   imageFormats,
   videoFormats,
+  arraysAreEqual,
   creatTime
 }

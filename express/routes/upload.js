@@ -11,7 +11,7 @@ const {
   videoFormats,
   creatTime,
 } = require('../utils/index.js')
-const { checkFileExistsInFolder } = require('../utils/flie.js');
+const { checkFileExistsInFolder, getFilesInFolder } = require('../utils/flie.js');
 const { thunkStreamMerge } = require('../utils/upload.js')
 
 
@@ -55,7 +55,6 @@ router.post('/imgs', (req, res) => {
  * 大文件上传： 分片
  */
 router.post('/largeFile', (req, res) => {
-  console.log(req.ip, 'ip')
   const busboy = Busboy({ headers: req.headers });
   const { filename, name, index } = req.query
   busboy.on('file', (req, (err, file, filds, encoding, mimetype) => {
@@ -87,9 +86,9 @@ router.post('/largeFile', (req, res) => {
 })
 
 /**
- * 大文件
+ * 合并分片
  */
-router.post('/mergeFile', async(req, res) => {
+router.post('/mergeFile', async (req, res) => {
   const { fileName, extName, filename } = req.query
   thunkStreamMerge(
     '../public/file/thunk/' + fileName,
@@ -104,7 +103,7 @@ router.post('/mergeFile', async(req, res) => {
 
   res.json({
     code: 1,
-    url: '/static/file/' + fileName,
+    url: '/static/file/' + fileName + "." + extName,
     fileType,
     fileName
   });
@@ -112,23 +111,41 @@ router.post('/mergeFile', async(req, res) => {
 
 /**
  * 校验文件是否已上传
- * 1. redis fileList 是否存在该文件名
- * 2. 静态服务上是否存在该文件
+ * 1. 静态服务上是否存在该文件 存在=》返回url
+ * 2. 不存在改文件
+ *    1）是否存在已上传的部分chunks 存在，返回还未上传的chunks 名列表
  */
-router.post('/verifyFile', async(req, res) => {
-  const { fileName, extName} = req.query
+router.post('/verifyFile', async (req, res) => {
+  const {
+    fileName,
+    extName,
+    chunksObj=''
+  } = req.query
+  console.log(JSON.parse(chunksObj))
+  const { name = '', chunsNames= [] } = JSON.parse(chunksObj || '{}') || {}
+  let notUploadedChunks = [] // 未上传的chunks名列表
+  let chunksFiles = []
   const isSave = checkFileExistsInFolder(fileName)
+  if (!isSave && name) { // 文件不存在 接着检查是否存在已上传的chunks
+    chunksFiles = getFilesInFolder(`../public/file/thunk/${name}`) || []
+    if (chunksFiles?.length && chunsNames?.length) {
+      notUploadedChunks = chunsNames.filter(item => !chunksFiles.includes(item))
+    }
+  }
   let fileType = extName
   if (imageFormats.includes(extName)) {
     fileType = 'img'
   } else if (videoFormats.includes(extName)) {
     fileType = 'video'
   }
+  const url = isSave ?  '/static/file/' + fileName : ''
   res.status(200).send({
     code: 0,
     fileType,
     fileName,
-    url: isSave ? '/static/file/' + fileName : ''
+    notUploadedChunks,
+    uploadedChunks: chunksFiles,
+    url
   })
 })
 

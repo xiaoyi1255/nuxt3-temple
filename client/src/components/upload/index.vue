@@ -1,13 +1,14 @@
 <template>
   <Upload v-model:file-list="fileList" name="file" :action="`${config?.baseUrl}/upload/imgs`" :headers="headers"
-    enctype="multipart/form-data" :beforeUpload="handleBeforeUpload" :showUploadList="showUploadList" @change="handleChange">
+    enctype="multipart/form-data" :beforeUpload="handleBeforeUpload" :showUploadList="showUploadList"
+    @change="handleChange">
     <Button>
       <div v-if="loading">
         <Spin />
       </div>
       <div v-else>
         <upload-outlined></upload-outlined>
-          发送文件
+        发送文件
       </div>
     </Button>
   </Upload>
@@ -18,9 +19,9 @@ import { message, Button, Upload, Spin } from "ant-design-vue";
 import { UploadOutlined } from "@ant-design/icons-vue";
 import type { UploadChangeParam } from "ant-design-vue";
 import { config } from "@/baseConfig";
-import heic2any from "heic2any";
+// import heic2any from "heic2any";
 import SparkMD5 from "spark-md5";
-
+const separator = '@' // 分隔符
 // const props = defineProps({
 //   isLarge: {
 //     type: Boolean,
@@ -29,12 +30,12 @@ import SparkMD5 from "spark-md5";
 // });
 const emit = defineEmits(["uploadSucess"]);
 
+
+
 const showUploadList = ref(false)
 
 const handleChange = (info: UploadChangeParam) => {
-  console.log(info.file);
   if (info.file.status !== "uploading") {
-    console.log(info.file, info.fileList);
   }
   if (info.file.status === "done") {
     loading.value = false;
@@ -63,36 +64,39 @@ const headers = {
  */
 const handleBeforeUpload = async (file: any) => {
   // loading.value = true;
+  if (file.size > 1024 * 1024 * 500) {
+    message.error('请选择小于500M的文件')
+  }
   message.loading();
   const fileName = file.name;
-  if (file.name.includes(".heic")) {
-    try {
-      const pngBlob = await heic2any({
-        blob: file,
-        toType: "image/png",
-      });
-      const pngFile = new File(
-        [pngBlob],
-        file.name.replace(/\.heic$/, ".png"),
-        {
-          type: "image/png",
-        }
-      );
-      return pngFile;
-    } catch (error) {
-      console.error("Error converting HEIC to PNG:", error);
-      message.error("Failed to convert HEIC to PNG");
-      loading.value = false;
+  // if (file.name.includes(".heic")) {
+  //   try {
+  //     const pngBlob = await heic2any({
+  //       blob: file,
+  //       toType: "image/png",
+  //     });
+  //     const pngFile = new File(
+  //       [pngBlob],
+  //       file.name.replace(/\.heic$/, ".png"),
+  //       {
+  //         type: "image/png",
+  //       }
+  //     );
+  //     return pngFile;
+  //   } catch (error) {
+  //     console.error("Error converting HEIC to PNG:", error);
+  //     message.error("Failed to convert HEIC to PNG");
+  //     loading.value = false;
 
-      return false; // Prevent upload
-    }
-  }
-  let flag = true
+  //     return false; // Prevent upload
+  //   }
+  // }
   if (file.size > 1024 * 1024 * 10) {
     showUploadList.value = true
     try {
-      const chunks = createChunks(file, 1024 * 1024 * 1);
+      const chunks = createChunks(file, 1024 * 1024 * 5);
       // const md5 = await createMd5(chunks)
+      
       import("./md5Worker?worker").then((worker) => {
         const md5Worker = new worker.default();
         md5Worker.postMessage(chunks)
@@ -101,19 +105,13 @@ const handleBeforeUpload = async (file: any) => {
           loading.value = false;
           md5Worker.terminate()
         }
-        md5Worker.onmessage = async function(e) {
-          console.log(e.data, '接收到的MD5')
+        md5Worker.onmessage = async function (e) {
           if (e.data) {
             md5Worker.terminate()
-            const md5 = e.data;
-            const { url = '', fileType } = await $fetch(`${config?.baseUrl}/upload/verifyFile`,
-              {
-                method: 'POST',
-                query: {
-                  extName: file.name.split(".").slice(-1)[0],
-                  fileName: md5 + '.' + file.name.split(".").slice(-1)[0]
-                }
-              })
+            const md5 = e.data as string;
+            let chunsNames = [] as string[]
+            chunks.forEach((item, index) => chunsNames.push(md5 + separator + index))
+            const { url = '', fileType, notUploadedChunks = [], uploadedChunks = [] } = await verifyFile(md5, chunks, file)
             if (url) { // 服务器已存在该文件
               emit("uploadSucess", {
                 imgSrc: url,
@@ -122,12 +120,10 @@ const handleBeforeUpload = async (file: any) => {
               });
               loading.value = false
               showUploadList.value = false
-              flag = false
               return false
             }
-  
-            const allRequest = uploadChunks(chunks, md5, fileName)
-  
+            const allRequest = uploadChunks(chunks, md5, fileName, notUploadedChunks, uploadedChunks)
+            console.log(allRequest, 'allRequest')
             const successArr: any[] = [] // 纪录成功上传的chunks
             Promise.allSettled(allRequest).then(res => {
               res?.forEach(item => {
@@ -137,7 +133,7 @@ const handleBeforeUpload = async (file: any) => {
                 }
               })
             }).finally(async () => {
-              const isAllSuccess = successArr.length === chunks.length
+              const isAllSuccess = successArr.length === allRequest.length
               if (!isAllSuccess) {
                 const tryAllRequest = chunks.map((item, index) => {
                   if (!successArr.includes('' + index)) {
@@ -166,6 +162,25 @@ const handleBeforeUpload = async (file: any) => {
 };
 
 /**
+ * 校验文件是否已上传
+ * @param md5 
+ * @param chunks 
+ */
+const verifyFile = (md5: string, chunks: Blob[], file: File) => {
+  let chunsNames = [] as string[]
+  chunks.forEach((item, index) => chunsNames.push(md5 + separator + index))
+  return $fetch(`${config?.baseUrl}/upload/verifyFile`,
+    {
+      method: 'POST',
+      query: {
+        chunksObj: { name: md5, chunsNames },
+        extName: file.name.split(".").slice(-1)[0],
+        fileName: md5 + '.' + file.name.split(".").slice(-1)[0]
+      }
+    })
+}
+
+/**
  * 文件分片
  * @param file 文件对象
  * @param chunksize 分片大小
@@ -180,14 +195,32 @@ const createChunks = (file: File, chunksize: number) => {
 
 /**
  * 循环上传chunks
+ * 
+ * 1.不存在 部分未上传 =》 全部上传
+ * 2. 存在 部分未上传 =》 只上传未上传部分
  * @param chunks 
  * @param md5 加密串
  * @param fileName 文件名
  */
-const uploadChunks = (chunks = [], md5 = '', fileName = '') => {
-  const allRequest = chunks.map((item, index) => {
-    return uploadLargeFile(item, md5, fileName, index)
-  });
+const uploadChunks = (chunks = [], md5 = '', fileName = '', notUploadedName = [], uploadedChunks = []) => {
+  const len = notUploadedName?.length || 0
+  const alReadyLoadLen = uploadedChunks?.length || 0
+
+  let allRequest = [] as any[]
+  if (len && alReadyLoadLen) { // 存在部分未上传
+    chunks.forEach((item, index) => {
+      const md5FileName = md5 + separator + index
+      if (notUploadedName.includes(md5FileName)) {
+        allRequest.push(uploadLargeFile(item, md5, fileName, index))
+      }
+    });
+  } else if (!len && alReadyLoadLen) {
+    return []
+  } else {
+    chunks.forEach((item, index) => {
+      allRequest.push(uploadLargeFile(item, md5, fileName, index))
+    });
+  }
   return allRequest
 }
 
@@ -198,22 +231,22 @@ const uploadChunks = (chunks = [], md5 = '', fileName = '') => {
  * @param fileName 文件名
  * @param index 下标：失败辅助标识
  */
-const uploadLargeFile = (item, md5='', fileName='',index=-1) => {
+const uploadLargeFile = (item, md5 = '', fileName = '', index = -1) => {
   const formData = new FormData();
   formData.append("file", item);
   return useFetch(`${config?.baseUrl}/upload/largeFile`, {
-      method: "POST",
-      headers: {
-        authorization: "authorization-text",
-      },
-      body: formData,
-      query: {
-        filename: md5 + "@" + index,
-        name: md5,
-        fileName,
-        index,
-      },
-    });
+    method: "POST",
+    headers: {
+      authorization: "authorization-text",
+    },
+    body: formData,
+    query: {
+      filename: md5 + separator + index,
+      name: md5,
+      fileName,
+      index,
+    },
+  });
 }
 
 /**
@@ -221,7 +254,7 @@ const uploadLargeFile = (item, md5='', fileName='',index=-1) => {
  * @param md5 
  * @param file 
  */
-const mergeFile = async(md5='', file:File) => {
+const mergeFile = async (md5 = '', file: File) => {
   const {
     url = "",
     fileType = "",
