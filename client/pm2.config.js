@@ -10,7 +10,7 @@ module.exports = {
       {
         name: 'ws',
         port: '3000',
-        instances: 4,
+        instances: 2,
         exec_mode: 'cluster',
         script: '../express/server.js'
       }
