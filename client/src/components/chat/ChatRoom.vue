@@ -2,183 +2,208 @@
   <div class="chat-container">
     <div class="dfsb aic top">
       <Button @click="exit(state)">退出房间</Button>
-      <p class="tc title">{{connected ? `房间号${state.roomId}`: '加入房间失败'}} <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button></p>
+      <p class="tc title">
+        {{ connected ? `房间号${state.roomId}` : "加入房间失败" }}
+        <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button>
+      </p>
       <div>
         <p>在线人数: {{ usersInfo.activityUsers }}</p>
         <p>房间人数：{{ usersInfo.users }}</p>
       </div>
     </div>
-    
+
     <div class="message" ref="chat">
       <div v-for="item in receivedMessages" :key="item.id">
-        <ChatBox :item="item" :isOwn="item.name==state.name" />
+        <ChatBox v-if="item.type!=='ping'" :item="item" :isOwn="item.name == state.name" />
       </div>
     </div>
     <div v-if="connected" class="bottom">
       <Upload @uploadSucess="uploadSucess" />
       <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
-      <Textarea :maxlength="100" @pressEnter="sendMessage" class="message-input" v-model:value.trim="message" placeholder="回车发送消息..." />
-      <!-- <div class="submit" @click="sendMessage">发送</div> -->
+      <Textarea
+        :maxlength="100"
+        @pressEnter="sendMessage"
+        class="message-input"
+        v-model:value.trim="message"
+        placeholder="回车发送消息..."
+      />
     </div>
   </div>
-  <RoomInfoModel :roomInfo="roomInfo" :show="roomInfoShow" @changeShow="changeRoomInfoShow" :name="state.name" />
+  <RoomInfoModel
+    :roomInfo="roomInfo"
+    :show="roomInfoShow"
+    @changeShow="changeRoomInfoShow"
+    :name="state.name"
+  />
 </template>
 
 <script setup>
-import { message as Message, Button, Textarea } from 'ant-design-vue'
-import Upload  from '../upload/index.vue'
-import { config } from '@/baseConfig'
-import RoomInfoModel from './model/InfoModel.vue'
-import ChatBox from './ChatBox.vue';
-
-const props = defineProps(['state'])
-const emit = defineEmits(['changeRoom'])
+import { message as Message, Button, Textarea } from "ant-design-vue";
+import Upload from "../upload/index.vue";
+import { config } from "@/baseConfig";
+import RoomInfoModel from "./model/InfoModel.vue";
+import ChatBox from "./ChatBox.vue";
+const props = defineProps(["state"]);
+const emit = defineEmits(["changeRoom"]);
+const router = useRouter()
 
 const connected = ref(false);
-const message = ref('');
+const message = ref("");
 const usersInfo = reactive({
-  totalUserList: [], // 
+  totalUserList: [], //
   activityUsers: 0,
-  users: 0
-})
-const roomInfo = ref({})
-const roomInfoShow = ref(false)
-const roomInfoLoading = ref(false)
+  users: 0,
+});
+const roomInfo = ref({});
+const roomInfoShow = ref(false);
+const roomInfoLoading = ref(false);
 const receivedMessages = ref([]);
-const chat = ref(null)
+const chat = ref(null);
 let socket = null;
 
+let timer = null;
 const connectWebSocket = () => {
-  const socketUrl = config?.baseWsUrl + '/ws';
+  const socketUrl = config?.baseWsUrl + "/ws";
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
     connected.value = true;
-    sendMessage(true)
+    clearInterval(timer);
+    timer = setInterval(() => {
+      sendMessage("ping");
+    }, 1000 * 6);
+    sendMessage(true);
   };
 
-  socket.onmessage = async(event) => {
+  socket.onmessage = async (event) => {
     const msg = JSON.parse(event.data);
-    const { name, roomId } = props.state
+    const { name, roomId } = props.state;
     if (roomId == msg.roomId) {
-      usersInfo.totalUserList = msg.totalUserList || []
-      usersInfo.activityUsers = msg.activityUsers || 0
-      usersInfo.users = msg.users || 0
+      usersInfo.totalUserList = msg.totalUserList || [];
+      usersInfo.activityUsers = msg.activityUsers || 0;
+      usersInfo.users = msg.users || 0;
     }
     if (msg?.code == 200 && msg.roomId == roomId) {
-      msg?.type != 'update' && receivedMessages.value.push(msg);
+      if (msg?.type != "update") {
+        receivedMessages.value.push(msg);
+      }
+      if (msg.type === 'ping' && msg.status !== 'pong') { // 断线重连
+        Message.loading('断线重连中...')
+        reConnectWebSocket()
+      }
     } else {
-      if (msg.name == name && roomId == msg.roomId ) {
-        Message.error(msg.text)
-        exit()
+      if (msg.name == name && roomId == msg.roomId) {
+        Message.error(msg.text);
+        exit();
       }
     }
-    await nextTick()
+    await nextTick();
     chat.value.scrollTop = chat.value.scrollHeight;
   };
   socket.onerror = (msg) => {
-    console.log('errr')
+    console.log("errr");
     connected.value = false;
     socket = null;
-    Message.error(msg)
+    Message.error(msg);
   };
   socket.onclose = (msg) => {
-    console.log('close')
+    console.log("close");
     connected.value = false;
     socket = null;
-    exit()
-    Message.error(msg)
+    exit();
   };
 };
 
 const reConnectWebSocket = () => {
-  flag = false
-  connectWebSocket()
-}
-let flag = false
-const sendMessage = (type = '', file={}) => {
+  flag = false;
+  connectWebSocket();
+};
+let flag = false;
+const sendMessage = (type = "", file = {}) => {
   if (!socket) return;
-  const state = {...props.state}
+  const state = { ...props.state };
   const messageObj = {
     ...state,
     ...file,
     text: message.value,
     id: Date.now(),
-    
   };
   if (!flag) {
     // 首次进入
-    flag =true
+    flag = true;
   } else {
-    messageObj.type = ''
-    type && (messageObj.type = type)
-    
+    messageObj.type = "";
+    type && (messageObj.type = type);
   }
 
   socket.send(JSON.stringify(messageObj));
-  message.value = '';
+  message.value = "";
 };
 
-const uploadSucess = (file={}) => {
-  sendMessage('upload', file)
-}
+const uploadSucess = (file = {}) => {
+  sendMessage("upload", file);
+};
 
-const exit = (state = {} ) => {
+const exit = (state = {}) => {
   if (socket) {
-    const type = 'leave'
-    state.name && sendMessage(type)
+    const type = "leave";
+    state.name && sendMessage(type);
     socket.close();
-    emit('changeRoom', {})
   }
-}
-const onLoadHandle = () => {
-    const userInfo = JSON.parse(sessionStorage.getItem('userInfo') ?? '{}')
-    if (userInfo?.name) {
-        $fetch(`${config?.baseUrl}/updateInfo`,{
-            method: 'POST',
-            params: {
-                name: userInfo?.name,
-                roomId: userInfo?.roomId
-            }
-        })
-    }
-    exit()
-}
-
+  router.push({
+    path: '/createroom'
+  })
+};
+const onLoadHandle = async() => {
+  $fetch(`${config?.baseUrl}/updateInfo`, {
+    method: "POST",
+    params: {
+      name: props.state?.name,
+      roomId: props.state?.roomId,
+    },
+  });
+};
 
 const getRoomInfo = async () => {
   if (!props.state?.roomId) {
-    Message.warn('房间号丢失....')
+    Message.warn("房间号丢失....");
   }
   try {
-    roomInfoLoading.value = true
-    const data = await $fetch(`${config.baseUrl}/getRoomInfoByRoomId`,{
+    roomInfoLoading.value = true;
+    const data = await $fetch(`${config.baseUrl}/getRoomInfoByRoomId`, {
       method: "GET",
       query: {
         t: +new Date(),
-        roomId: props.state.roomId
-      }
-    })
+        roomId: props.state.roomId,
+      },
+    });
     if (data) {
-      roomInfo.value = data
-      changeRoomInfoShow(true)
+      roomInfo.value = data;
+      changeRoomInfoShow(true);
     }
-    roomInfoLoading.value = false
+    roomInfoLoading.value = false;
   } catch (error) {
-    roomInfoLoading.value = false
-    
+    roomInfoLoading.value = false;
   }
-  console.log('roomInfo', roomInfo)
-}
-const changeRoomInfoShow = ( flag = false) => {
-  roomInfoShow.value = flag
-}
+  console.log("roomInfo", roomInfo);
+};
+const changeRoomInfoShow = (flag = false) => {
+  roomInfoShow.value = flag;
+};
 
 onMounted(() => {
   connectWebSocket();
-  window.addEventListener('beforeunload', onLoadHandle)
+  // window.addEventListener("beforeunload", onLoadHandle);
   chat.value.scrollTop = chat.value.scrollHeight;
-
+});
+onBeforeUnmount(()=> {
+  sendMessage('leave')
+  onLoadHandle()
+  clearInterval(timer);
+})
+onUnmounted(() => {
+  clearInterval(timer);
+  window.removeEventListener("beforeunload", onLoadHandle);
 });
 </script>
 
@@ -227,11 +252,10 @@ Button {
   border-radius: 0;
   border-top: 1px solid #dbdbdb;
   padding-bottom: 5vh;
-
 }
-.message::-webkit-scrollbar{
-  display: none
-};
+.message::-webkit-scrollbar {
+  display: none;
+}
 .bottom {
   width: 80vw;
   overflow: hidden;
@@ -273,7 +297,7 @@ Button {
 </style>
 
 <style scoped lang="less">
-@media screen and (min-width:800px) {
+@media screen and (min-width: 800px) {
   .chat-container {
     padding: 2vh 15vh;
   }
@@ -282,8 +306,6 @@ Button {
     position: static;
   }
 }
-
-
 </style>
 
   

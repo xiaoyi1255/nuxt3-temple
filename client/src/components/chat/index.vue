@@ -1,23 +1,20 @@
 <template>
-    <!-- <client-only placeholder="loading...">
-    </client-only> -->
-    <CreateChat v-if="!state.roomId" @changeRoom="changeRoom"></CreateChat>
-    <ChatRoom v-else :state="state" @changeRoom="changeRoom"></ChatRoom>
-    <!-- <Upload :is-large="true" /> -->
-    <!-- <ChatTest /> -->
+    <ChatRoom :state="state" @changeRoom="changeRoom"></ChatRoom>
 </template>
 
 <script lang="ts" setup>
 import ChatRoom from './ChatRoom.vue'
 import CreateChat  from './CreateChat.vue'
 // import Upload  from '../upload/index.vue'
-
+const route = useRoute()
 const state = reactive({
     name: '',
     roomId: 0,
     type: '',
     password: ''
 })
+const query = route.query
+console.log(query)
 const changeRoom = (newInfo = {}) => {
     console.log(newInfo, 'asdsadsadasd')
     state.name = newInfo.name

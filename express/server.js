@@ -9,7 +9,6 @@ const redisCkient = require('./utils/redis')
 let roomMap = new Map()
 redisCkient.get2Map().then(res => {
 	roomMap = res || new Map();
-
 })
 app.use(express.json());
 // 托管静态文件
@@ -45,7 +44,6 @@ app.post('/updateInfo', async(req, res) => {
 		const roomInfo = roomMap.get(+roomId);
 		roomInfo?.userList?.some((item) => {
 			if (item.name == name) {
-				console.log(roomInfo?.userList)
 				item.active = false;
 				return true;
 			}
@@ -65,15 +63,46 @@ app.post('/updateInfo', async(req, res) => {
 });
 
 app.get('/getRoomInfoByRoomId', (req, res) => {
-	const { roomId: _roomId } = req.query;
-	const roomId = Number(_roomId)
-	console.log('getRoomInfoByRoomId：', roomId)
+	const { roomId } = req.query;
 	if (!roomId || !roomMap.size || !roomMap.get(roomId)) {
 		return res.send({});
 	}
 	const roomInfo = roomMap.get(roomId);
 	res.send(roomInfo);
 });
+
+app.post('/createRoom', async(req, res) => {
+	const { roomId, name, id, password='' } = req.query;
+	const room = roomMap.get(roomId);
+	const time = new Date().now
+	if (!room) {
+		const roomInfo = {
+			roomId,
+			createUser: name,
+			createTime: id,
+			serverTime: time,
+			password: password,
+			userList: [
+				{ name, jionTime: time, active: false }
+			],
+			messageList: [
+				
+			],
+		};
+		roomMap.set(roomId, roomInfo);
+		await redisCkient.set2Map(roomMap)
+		res.send({
+			code: 0,
+			msg: '房间创建成功'
+		})
+	}else{
+		res.send({
+			code: 5001,
+			msg: '房间号已存在'
+		})
+	}
+});
+
 server.on('upgrade', (request, socket, head) => {
 	switch (request.url) {
 		case '/ws':
@@ -113,7 +142,7 @@ function wsHandles() {
 			msg.code = 200;
 			const { type, roomId, name, id, password='' } = msg || {};
 			const room = roomMap.get(roomId);
-			const time = new Date().now
+			const time = new Date().getTime()
 			if (type == 'create') {
 				if (!room) {
 					const roomInfo = {
@@ -123,7 +152,7 @@ function wsHandles() {
 						serverTime: time,
 						password: password,
 						userList: [
-							{ name, jionTime: time, active: true }
+							{ name, jionTime: time, active: false }
 						],
 						messageList: [
 							
@@ -136,7 +165,7 @@ function wsHandles() {
 					msg.text = '房间号已存在';
 					msg.code = 5001;
 				}
-			} else if (type == 'join') {
+			} else if (type === 'join') {
 				// 加入房间
 				if (!room) {
 					msg.code = 5004;
@@ -151,6 +180,7 @@ function wsHandles() {
 								userIsSctivity = item.active
 								if (!item.active) {
 									item.active = true;
+									item.activeTime = time
 								}
 								return true;
 							}
@@ -158,16 +188,16 @@ function wsHandles() {
 					}
 
 					if (hasUser && userIsSctivity) { // 用一个用户两个地方登录
-						msg.text = '用户名已存在';
+						msg.text = `用户 ${name} 已在房间${roomId}`;
 						msg.code = 5002;
 					} else if(hasUser && !userIsSctivity)  { // 房间中的用户上线
-						msg.text = '欢迎' + name + '返回房间！';
+						msg.text = '欢迎' + name + '进入房间！';
 					}else{
 						room.userList.push({ name, jionTime: +new Date(), active: true })
 						msg.text = name + '已进入房间';
 					}
 				}
-			} else if (type == 'leave') {
+			} else if (type === 'leave') {
 				if (Array.isArray(room.userList) && room.userList.length) {
 					const index = room.userList.findIndex(
 						(item) => item.name === name
@@ -178,6 +208,16 @@ function wsHandles() {
 						roomMap.delete(roomId);
 					}
 				}
+			} else if(type === 'ping'){
+				msg.status = 'pong'
+				room.userList.some(item => {
+					if (item.name === name) {
+						// 用户活跃
+						item.active = true
+						item.activeTime = time
+						console.log('ping', JSON.stringify(item))
+					}
+				})
 			} else { //保存消息
 				const currentRoom = roomMap.get(roomId)
 				if (currentRoom) {
@@ -197,7 +237,18 @@ function wsHandles() {
 			}
 			msg.users = roomMap.get(roomId)?.userList?.length || 0;
 			msg.totalUserList = roomMap.get(roomId)?.userList || []
-			msg.activityUsers = roomMap.get(roomId)?.userList?.filter(item => item.active)?.length
+			msg.activityUsers = roomMap.get(roomId)?.userList?.filter(item => {
+				item.active && console.log('item', JSON.stringify(item))
+
+				if (item.active && item.activeTime && (time - item.activeTime) < 1000 * 8) {
+					item.active = true
+					return true
+				} else {
+					item.active = false
+					item.activeTime = 0
+				}
+
+			})?.length
 			// 广播消息给所有连接的客户端
 			await redisCkient.set2Map(roomMap)
 			wss.clients.forEach((client) => {

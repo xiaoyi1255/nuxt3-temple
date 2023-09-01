@@ -74,7 +74,7 @@ class RoomListCkient extends RedisClient {
 
 	async set2Map(value= new Map(), day = 30) {
         this.map = value
-        console.log('set ', value)
+        console.log('set ', JSON.stringify(value))
 		await this.redis.set(
 			this._key,
 			JSON.stringify([...value]),

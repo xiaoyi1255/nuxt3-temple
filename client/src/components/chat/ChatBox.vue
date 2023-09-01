@@ -13,8 +13,8 @@
             {{ item.text }}
         </p>
         <div class="user">
-            <div class="time">{{ new Date(item.id).toLocaleTimeString() }}</div>
-            <div class="user">{{ item.name }}</div>
+            <div class="time">{{ (new Date(item.id).toLocaleTimeString()).slice(0,5) }}</div>
+            <div class="name dfcc">{{ item.name.slice(0,3) }}</div>
         </div>
     </div>
 </template>
@@ -60,7 +60,7 @@ const playVideo = () => {
 
     .msg {
         color: #fff;
-        padding: 1vw;
+        padding: 2vh;
         margin-right: 1vh;
         max-width: 60vw;
         height: 100%;
@@ -70,6 +70,7 @@ const playVideo = () => {
         border-radius: 2vh;
         box-sizing: border-box;
         order: 1;
+        word-break: break-all
     }
 
     .msg-img {
@@ -86,7 +87,13 @@ const playVideo = () => {
         width: 6vh;
         overflow: hidden;
         order: 2;
-
+        .name {
+            width: 4vh;
+            height: 4vh;
+            border-radius: 50%;
+            background: #5d46da;
+            color: #fff;
+        }
     }
 }
 
@@ -98,6 +105,9 @@ const playVideo = () => {
         order: 2;
         width: 6vh;
         overflow: hidden;
+        .name {
+            background-color: #7dad6a;
+        }
     }
 
     .msg {
