@@ -36,10 +36,9 @@ function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFilesDir) {
       fileWriteStream.end('完成了');
       // 删除临时目录
       fs.rmdirSync(sourceFilesDir, { recursive: true, force: true });
+      console.log('合并完成')
       // 指定要删除空文件夹的目录
-      const directoryToDelete = '../public/file/thunk/';
-      // 调用函数删除空文件夹
-      deleteEmptyFolders(directoryToDelete);
+      deleteEmptyFolders()
       return;
     }
 
@@ -57,15 +56,17 @@ function thunkStreamMergeProgress(fileList, fileWriteStream, sourceFilesDir) {
     console.error('报错了', error)
   }
 }
-
+deleteEmptyFolders()
 
 
 /**
  * 定义一个函数来递归遍历目录并删除空文件夹
  * @param {*} directory 文件目录
  */
-function deleteEmptyFolders(directory) {
+function deleteEmptyFolders(directory = '../public/file/thunk') {
+  console.log(directory, 'deleteEmptyFolders', fs.existsSync(directory))
   if (fs.existsSync(directory)) {
+    console.log('11')
     // 读取目录中的内容
     const files = fs.readdirSync(directory);
 

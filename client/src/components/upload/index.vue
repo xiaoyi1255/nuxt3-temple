@@ -1,21 +1,17 @@
 <template>
   <Upload v-model:file-list="fileList" name="file" :action="`${config?.baseUrl}/upload/imgs`" :headers="headers"
-    enctype="multipart/form-data" :beforeUpload="handleBeforeUpload" :showUploadList="showUploadList"
+    enctype="multipart/form-data" :beforeUpload="handleBeforeUpload" :showUploadList="false"
     @change="handleChange">
     <Button>
-      <div v-if="loading">
-        <Spin />
-      </div>
-      <div v-else>
-        <upload-outlined></upload-outlined>
-        发送文件
-      </div>
+      <upload-outlined></upload-outlined>
+      发送文件
     </Button>
+    <Progress v-if="progress" type="line" :percent="progress" />
   </Upload>
 </template>
 <script lang="ts" setup>
 import { ref } from "vue";
-import { message, Button, Upload, Spin } from "ant-design-vue";
+import { message, Button, Upload, Spin, Progress } from "ant-design-vue";
 import { UploadOutlined } from "@ant-design/icons-vue";
 import type { UploadChangeParam } from "ant-design-vue";
 import { config } from "@/baseConfig";
@@ -30,15 +26,19 @@ const separator = '@' // 分隔符
 // });
 const emit = defineEmits(["uploadSucess"]);
 
-
+const progress = ref(0)
 
 const showUploadList = ref(false)
+
+const fileList = ref([]);
+const headers = {
+  authorization: "authorization-text",
+};
 
 const handleChange = (info: UploadChangeParam) => {
   if (info.file.status !== "uploading") {
   }
   if (info.file.status === "done") {
-    loading.value = false;
     message.destroy();
     emit("uploadSucess", {
       imgSrc: info.file?.response?.url,
@@ -47,27 +47,18 @@ const handleChange = (info: UploadChangeParam) => {
     });
   } else if (info.file.status === "error") {
     message.error(`${info.file.name} 发送失败`);
-    loading.value = false;
     message.destroy();
   }
 };
-const loading = ref(false);
-const fileList = ref([]);
-const headers = {
-  authorization: "authorization-text",
-};
-
 /**
  * 上传前的拦截
  * @param file 文件对象
  * @return 返回 file 则自动上传
  */
 const handleBeforeUpload = async (file: any) => {
-  // loading.value = true;
   if (file.size > 1024 * 1024 * 500) {
     message.error('请选择小于500M的文件')
   }
-  message.loading();
   const fileName = file.name;
   // if (file.name.includes(".heic")) {
   //   try {
@@ -86,7 +77,6 @@ const handleBeforeUpload = async (file: any) => {
   //   } catch (error) {
   //     console.error("Error converting HEIC to PNG:", error);
   //     message.error("Failed to convert HEIC to PNG");
-  //     loading.value = false;
 
   //     return false; // Prevent upload
   //   }
@@ -102,7 +92,6 @@ const handleBeforeUpload = async (file: any) => {
         md5Worker.postMessage(chunks)
         md5Worker.onerror = err => {
           console.log(err)
-          loading.value = false;
           md5Worker.terminate()
         }
         md5Worker.onmessage = async function (e) {
@@ -118,18 +107,20 @@ const handleBeforeUpload = async (file: any) => {
                 fileType: fileType,
                 fileName: file.name,
               });
-              loading.value = false
               showUploadList.value = false
               return false
             }
             const allRequest = uploadChunks(chunks, md5, fileName, notUploadedChunks, uploadedChunks)
             console.log(allRequest, 'allRequest')
+            let success = 0
             const successArr: any[] = [] // 纪录成功上传的chunks
             Promise.allSettled(allRequest).then(res => {
               res?.forEach(item => {
                 if (item.status == 'fulfilled' && item.value?.data?.value?.code == 0) {
                   const failIndex = item.value.data.value?.index
                   successArr.push(failIndex)
+                  success++
+                  progress.value = (100/success)*success
                 }
               })
             }).finally(async () => {
@@ -144,7 +135,9 @@ const handleBeforeUpload = async (file: any) => {
                 await Promise.all(tryAllRequest)
               }
               mergeFile(md5, file)
-              loading.value = false;
+              setTimeout(()=> {
+                progress.value=0
+              }, 1500)
               showUploadList.value = false
             })
           }
@@ -152,7 +145,6 @@ const handleBeforeUpload = async (file: any) => {
       });
       return false;
     } catch (error) {
-      loading.value = false;
       return false;
     }
   } else {
