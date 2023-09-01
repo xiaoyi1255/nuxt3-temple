@@ -2,7 +2,7 @@
   <Upload v-model:file-list="fileList" name="file" :action="`${config?.baseUrl}/upload/imgs`" :headers="headers"
     enctype="multipart/form-data" :beforeUpload="handleBeforeUpload" :showUploadList="false"
     @change="handleChange">
-    <Button>
+    <Button :loading="progress">
       <upload-outlined></upload-outlined>
       发送文件
     </Button>
@@ -58,6 +58,7 @@ const handleChange = (info: UploadChangeParam) => {
 const handleBeforeUpload = async (file: any) => {
   if (file.size > 1024 * 1024 * 500) {
     message.error('请选择小于500M的文件')
+    return false
   }
   const fileName = file.name;
   // if (file.name.includes(".heic")) {
@@ -119,8 +120,6 @@ const handleBeforeUpload = async (file: any) => {
                 if (item.status == 'fulfilled' && item.value?.data?.value?.code == 0) {
                   const failIndex = item.value.data.value?.index
                   successArr.push(failIndex)
-                  success++
-                  progress.value = (100/success)*success
                 }
               })
             }).finally(async () => {
@@ -137,7 +136,7 @@ const handleBeforeUpload = async (file: any) => {
               mergeFile(md5, file)
               setTimeout(()=> {
                 progress.value=0
-              }, 1500)
+              }, 1000)
               showUploadList.value = false
             })
           }
@@ -197,20 +196,28 @@ const createChunks = (file: File, chunksize: number) => {
 const uploadChunks = (chunks = [], md5 = '', fileName = '', notUploadedName = [], uploadedChunks = []) => {
   const len = notUploadedName?.length || 0
   const alReadyLoadLen = uploadedChunks?.length || 0
-
+  let success = 0
   let allRequest = [] as any[]
   if (len && alReadyLoadLen) { // 存在部分未上传
+    const allReq = chunks.filter((_item,_index) => notUploadedName.includes(md5 + separator + _index))
     chunks.forEach((item, index) => {
       const md5FileName = md5 + separator + index
       if (notUploadedName.includes(md5FileName)) {
-        allRequest.push(uploadLargeFile(item, md5, fileName, index))
+        allRequest.push(uploadLargeFile(item, md5, fileName, index).then(res => {
+          success++
+          progress.value = Math.floor((100/allReq.length)*success)
+        }))
       }
     });
   } else if (!len && alReadyLoadLen) {
     return []
   } else {
+
     chunks.forEach((item, index) => {
-      allRequest.push(uploadLargeFile(item, md5, fileName, index))
+      allRequest.push(uploadLargeFile(item, md5, fileName, index).then(res => {
+        success++
+        progress.value = Math.floor((100/chunks.length)*success)
+      }))
     });
   }
   return allRequest
