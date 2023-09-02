@@ -16,6 +16,9 @@ class RedisClient {
 	async set(key, value) {
 		await this.redis.set(key, value);
 	}
+	async setEX(key, value, time=60*60*24*7) {
+		await this.redis.set(key, value, 'EX', time);
+	}
 
 	async get(key) {
 		return await this.redis.get(key);

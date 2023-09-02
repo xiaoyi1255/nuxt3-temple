@@ -7,13 +7,13 @@ module.exports = {
         instances: 1,
         script: './.output/server/index.mjs'
       },
-      {
-        name: 'ws',
-        port: '3000',
-        instances: 2,
-        exec_mode: 'cluster',
-        script: '../express/server.js'
-      }
+      // {
+      //   name: 'ws',
+      //   port: '3000',
+      //   instances: 2,
+      //   exec_mode: 'cluster',
+      //   script: '../express/server.js'
+      // }
     ]
   }
   
