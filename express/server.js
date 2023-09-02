@@ -4,6 +4,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors'); // 导入 cors 中间件
 const uploadRoutes = require('./routes/upload.js');
+const wechatRoutes = require('./routes/wechat.js');
 const path = require('path');
 const redisCkient = require('./utils/redis');
 const { MAX_AGE, WHITE_LIST, HEART_TIME } = require('./config.js');
@@ -28,6 +29,7 @@ const wss = new WebSocket.Server({ noServer: true });
 wsHandles(); // websocket 监听器
 
 app.use('/upload', uploadRoutes);
+app.use('', wechatRoutes);
 
 // 在 Express 中处理除了 /ws 路由以外的请求
 app.get('/getAllRoomInfo', async (req, res) => {
