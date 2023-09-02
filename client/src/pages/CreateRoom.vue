@@ -160,6 +160,8 @@
           t: +new Date(),
           roomId: roomId
         }
+      }).catch(err => {
+        message.error(err)
       })
   }
   const close = () => {

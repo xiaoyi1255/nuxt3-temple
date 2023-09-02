@@ -1,5 +1,5 @@
 <template>
-    <div class="item" :class=" !_isOwn ? 'item1':''">
+    <div class="item" v-if="item" :class=" !_isOwn ? 'item1':''">
         <div v-if="item.imgSrc" class="msg msg-img tc">
             <div v-if="item.fileType=='img'" class="img">
                 <Image  :src="getImgSrc(item.imgSrc)" alt="" />

@@ -4,7 +4,7 @@
       <Button @click="exit(state)">退出房间</Button>
       <p class="tc title">
         {{ connected ? `房间号${state.roomId}` : "加入房间失败" }}
-        <Button v-if="!connected" @click="reConnectWebSocket">重新连接</Button>
+        <Button v-if="!connected" @click="reConnectWebSocket(true)">重新连接</Button>
       </p>
       <div>
         <p>在线人数: {{ usersInfo.activityUsers }}</p>
@@ -63,15 +63,19 @@ let socket = null;
 
 let timer = null;
 const connectWebSocket = () => {
+  const { name, roomId } = props.state
+  if (!name|| !roomId) return
   const socketUrl = config?.baseWsUrl + "/ws";
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
+    console.log('WebSocket连接成功！')
     connected.value = true;
+    retry = 0
     clearInterval(timer);
     timer = setInterval(() => {
       sendMessage("ping");
-    }, 1000 * 6);
+    }, 1000 * 4);
     sendMessage(true);
   };
 
@@ -87,35 +91,50 @@ const connectWebSocket = () => {
       if (msg?.type != "update") {
         receivedMessages.value.push(msg);
       }
-      if (msg.type === 'ping' && msg.status !== 'pong') { // 断线重连
-        Message.loading('断线重连中...')
-        reConnectWebSocket()
+      if (msg.type === 'ping') { // 断线重连
+        if( msg.status !== 'pong') {
+          Message.loading('断线重连中...')
+          reConnectWebSocket()
+        }
+        msg.name == name && console.log('心跳检测中状态：', msg.status)
       }
     } else {
       if (msg.name == name && roomId == msg.roomId) {
         Message.error(msg.text);
-        exit();
+        onLoadHandle()
       }
     }
     await nextTick();
-    chat.value.scrollTop = chat.value.scrollHeight;
+    chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);
   };
   socket.onerror = (msg) => {
     console.log("errr");
-    connected.value = false;
-    socket = null;
-    Message.error(msg);
   };
   socket.onclose = (msg) => {
     console.log("close");
-    connected.value = false;
-    socket = null;
-    exit();
+    reConnectWebSocket()
   };
 };
-
-const reConnectWebSocket = () => {
+let retry = 0
+/**
+ * 
+ * @param {*} isAutomatic 是否手动重连
+ * @param {*} retryCunt  自动重连次数
+ */
+const reConnectWebSocket = (isAutomatic=false, retryCunt=10) => {
   flag = false;
+  if (!isAutomatic) {
+    console.log(retry, "自动重连次数")
+    retry++
+    if (retry >= retryCunt) {
+      clearInterval(timer);
+      connected.value = false;
+      socket = null;
+      return
+    }
+  } else {
+    console.log('手动重连')
+  }
   connectWebSocket();
 };
 let flag = false;
@@ -155,6 +174,7 @@ const exit = (state = {}) => {
   })
 };
 const onLoadHandle = async() => {
+  clearInterval(timer);
   $fetch(`${config?.baseUrl}/updateInfo`, {
     method: "POST",
     params: {
@@ -190,18 +210,32 @@ const getRoomInfo = async () => {
 const changeRoomInfoShow = (flag = false) => {
   roomInfoShow.value = flag;
 };
-
+let timeOut = null 
 onMounted(() => {
+  const { name, roomId } = props.state
+  if (!name|| !roomId) {
+    Message.loading('房间信息、用户名不存在，3秒后自动退出')
+    timeOut && clearTimeout(timeOut)
+    timeOut = setTimeout(() => {
+      router.push({
+        path: '/createroom'
+      })
+
+    }, 3000)
+  }
+
   connectWebSocket();
-  // window.addEventListener("beforeunload", onLoadHandle);
-  chat.value.scrollTop = chat.value.scrollHeight;
+  window.addEventListener("beforeunload", onLoadHandle);
+  chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);
 });
 onBeforeUnmount(()=> {
   sendMessage('leave')
   onLoadHandle()
   clearInterval(timer);
+  timeOut && clearTimeout(timeOut)
 })
 onUnmounted(() => {
+  timeOut && clearTimeout(timeOut)
   clearInterval(timer);
   window.removeEventListener("beforeunload", onLoadHandle);
 });
