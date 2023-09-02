@@ -4,7 +4,7 @@ const jsSHA = require('jssha')
 const router = express.Router();
 const redisCkient = require('../utils/redis');
 
-router.get('/wechat_mp', (req, res, next) => {
+router.get('/wechat', (req, res, next) => {
 	const token = 'xiaoyi1255';
 	//1.获取微信服务器Get请求的参数 signature、timestamp、nonce、echostr
 	const { signature, timestamp, nonce, echostr } = req.query;
@@ -30,7 +30,7 @@ router.get('/wechat_mp', (req, res, next) => {
 	}
 });
 
-router.post('/wechat_mp', function (req, res) {
+router.post('/wechat', function (req, res) {
 	var buffer = [];
 	req.on('data', function (data) {
 		buffer.push(data);
