@@ -1,5 +1,5 @@
 <template>
-    <div class="item" v-if="item" :class=" !_isOwn ? 'item1':''">
+    <div class="item" v-if="item &&( item.imgSrc || item.text)" :class=" !_isOwn ? 'item1':''">
         <div v-if="item.imgSrc" class="msg msg-img tc">
             <div v-if="item.fileType=='img'" class="img">
                 <Image  :src="getImgSrc(item.imgSrc)" alt="" />
@@ -9,7 +9,7 @@
             </div>
             <a v-else class="tc" :href="getImgSrc(item?.imgSrc)" target="_blank">{{ item.fileName }}</a>
         </div>
-        <p class="msg" v-else>
+        <p class="msg" v-else-if="item.text">
             {{ item.text }}
         </p>
         <div class="user">

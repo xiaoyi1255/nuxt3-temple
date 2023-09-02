@@ -204,8 +204,8 @@ function wsHandles() {
 
 					if (hasUser && userIsSctivity) {
 						// 用一个用户两个地方登录
-						msg.text = `用户 ${name} 已在房间${roomId}`;
-						msg.code = 5002;
+						// msg.text = `用户 ${name} 已在房间${roomId}`;
+						// msg.code = 5002;
 					} else if (hasUser && !userIsSctivity) {
 						// 房间中的用户上线
 						msg.text = '欢迎' + name + '进入房间！';

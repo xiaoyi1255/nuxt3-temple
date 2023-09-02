@@ -1,7 +1,7 @@
 <template>
     <Modal v-if="vShow" v-model:open="vShow" :title="title" @ok="handleOk">
         <div>房主：<span>{{ roomInfo.createUser }}</span></div>
-        <div>创建时间：<span>{{ new Date(roomInfo.createTime).toLocaleString() }}</span></div>
+        <div>创建时间：<span>{{ new Date(+roomInfo.createTime).toLocaleString() }}</span></div>
         <div class="modal">
             <div v-for="(item, index) in roomInfo.messageList" :key="index">
                 <ChatBox :item="item" :isOwn="item.name ==name" />

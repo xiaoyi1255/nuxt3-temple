@@ -72,6 +72,7 @@ const connectWebSocket = () => {
     console.log('WebSocket连接成功！')
     connected.value = true;
     retry = 0
+    flag = false;
     clearInterval(timer);
     timer = setInterval(() => {
       sendMessage("ping");
