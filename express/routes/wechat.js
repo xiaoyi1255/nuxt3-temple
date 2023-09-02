@@ -8,7 +8,7 @@ router.get('/wechat', (req, res, next) => {
 	const token = 'xiaoyi1255';
 	//1.获取微信服务器Get请求的参数 signature、timestamp、nonce、echostr
 	const { signature, timestamp, nonce, echostr } = req.query;
-
+	console.log(req.query)
 	//2.将token、timestamp、nonce三个参数进行字典序排序
 	const array = [token, timestamp, nonce].sort();
 
