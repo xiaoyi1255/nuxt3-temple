@@ -299,7 +299,7 @@ function wsHandles() {
 }
 
 // 启动服务器
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 443;
 server.listen(PORT, () => {
 	console.log(`服务器正在运行，端口：${PORT}`);
 });
