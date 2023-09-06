@@ -7,7 +7,7 @@
         :class="emoji.historyList?.length ? 'historyShow' : ''"
       >
         <li
-          v-for="(item, index) in emoji.historyList"
+          v-for="(item, index) in [...new Set(emoji.historyList)]"
           :key="index"
           @click.stop="chooseEmojiDefault(item)"
           v-html="item"
