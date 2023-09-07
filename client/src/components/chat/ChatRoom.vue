@@ -4,7 +4,9 @@
       <Button @click="exit(state)">退出房间</Button>
       <p class="tc title">
         {{ connected ? `房间号${state.roomId}` : "加入房间失败" }}
-        <Button v-if="!connected" @click="reConnectWebSocket(true)">重新连接</Button>
+        <Button v-if="!connected" @click="reConnectWebSocket(true)"
+          >重新连接</Button
+        >
       </p>
       <div>
         <p>在线人数: {{ usersInfo.activityUsers }}</p>
@@ -14,12 +16,32 @@
 
     <div class="message" ref="chat">
       <div v-for="item in receivedMessages" :key="item.id">
-        <ChatBox v-if="item.type!=='ping'" :item="item" :isOwn="item.name == state.name" />
+        <ChatBox
+          v-if="item.type !== 'ping'"
+          :item="item"
+          :isOwn="item.name == state.name"
+        />
       </div>
     </div>
     <div v-if="connected" class="bottom">
       <Upload @uploadSucess="uploadSucess" />
-      <Button @click="getRoomInfo" :loading="roomInfoLoading">历史消息</Button>
+      <smile-outlined
+        style="font-size: 22px; margin: 0 2vh"
+        @click="selectEmoji"
+      />
+      <Button
+        style="position: absolute; right: 15vh"
+        @click="getRoomInfo"
+        :loading="roomInfoLoading"
+        >历史消息</Button
+      >
+      <Popover v-model:open="visible" title="" placement="top">
+        <template #content>
+          <div>
+            <Emoji ref="emojiRef" @emojiHandle="emojiHandle" />
+          </div>
+        </template>
+      </Popover>
       <Textarea
         :maxlength="100"
         @pressEnter="sendMessage"
@@ -38,15 +60,19 @@
 </template>
 
 <script setup>
-import { message as Message, Button, Textarea } from "ant-design-vue";
-import Upload from "../upload/index.vue";
+import { SmileOutlined } from "@ant-design/icons-vue";
+import { message as Message, Button, Textarea, Popover } from "ant-design-vue";
+import Emoji from "@/components/emoji/index.vue";
+
+import Upload from "@/components/upload/index.vue";
 import { config } from "@/baseConfig";
 import RoomInfoModel from "./model/InfoModel.vue";
 import ChatBox from "./ChatBox.vue";
 const props = defineProps(["state"]);
 const emit = defineEmits(["changeRoom"]);
-const router = useRouter()
+const router = useRouter();
 
+const visible = ref(false);
 const connected = ref(false);
 const message = ref("");
 const usersInfo = reactive({
@@ -54,6 +80,8 @@ const usersInfo = reactive({
   activityUsers: 0,
   users: 0,
 });
+const emojiRef = ref(null);
+const cursor = ref(0);
 const roomInfo = ref({});
 const roomInfoShow = ref(false);
 const roomInfoLoading = ref(false);
@@ -63,15 +91,15 @@ let socket = null;
 
 let timer = null;
 const connectWebSocket = () => {
-  const { name, roomId } = props.state
-  if (!name|| !roomId) return
+  const { name, roomId } = props.state;
+  if (!name || !roomId) return;
   const socketUrl = config?.baseWsUrl + "/ws";
   socket = new WebSocket(socketUrl);
 
   socket.onopen = () => {
-    console.log('WebSocket连接成功！')
+    console.log("WebSocket连接成功！");
     connected.value = true;
-    retry = 0
+    retry = 0;
     flag = false;
     clearInterval(timer);
     timer = setInterval(() => {
@@ -92,49 +120,52 @@ const connectWebSocket = () => {
       if (msg?.type != "update") {
         receivedMessages.value.push(msg);
       }
-      if (msg.type === 'ping') { // 断线重连
-        if( msg.status !== 'pong') {
-          Message.loading('断线重连中...')
-          reConnectWebSocket()
+      if (msg.type === "ping") {
+        // 断线重连
+        if (msg.status !== "pong") {
+          Message.loading("断线重连中...");
+          reConnectWebSocket();
         }
-        msg.name == name && console.log('心跳检测中状态：', msg.status)
+        msg.name == name && console.log("心跳检测中状态：", msg.status);
       }
     } else {
       if (msg.name == name && roomId == msg.roomId) {
         Message.error(msg.text);
-        onLoadHandle()
+        onLoadHandle();
       }
     }
-    await nextTick();
-    chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);
+    if (msg.type !== "ping") {
+      await nextTick();
+      chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);
+    }
   };
   socket.onerror = (msg) => {
     console.log("errr");
   };
   socket.onclose = (msg) => {
     console.log("close");
-    reConnectWebSocket()
+    reConnectWebSocket();
   };
 };
-let retry = 0
+let retry = 0;
 /**
- * 
+ *
  * @param {*} isAutomatic 是否手动重连
  * @param {*} retryCunt  自动重连次数
  */
-const reConnectWebSocket = (isAutomatic=false, retryCunt=10) => {
+const reConnectWebSocket = (isAutomatic = false, retryCunt = 10) => {
   flag = false;
   if (!isAutomatic) {
-    console.log(retry, "自动重连次数")
-    retry++
+    console.log(retry, "自动重连次数");
+    retry++;
     if (retry >= retryCunt) {
       clearInterval(timer);
       connected.value = false;
       socket = null;
-      return
+      return;
     }
   } else {
-    console.log('手动重连')
+    console.log("手动重连");
   }
   connectWebSocket();
 };
@@ -157,7 +188,7 @@ const sendMessage = (type = "", file = {}) => {
   }
 
   socket.send(JSON.stringify(messageObj));
-  message.value = "";
+  type !== "ping" && (message.value = "");
 };
 
 const uploadSucess = (file = {}) => {
@@ -171,10 +202,10 @@ const exit = (state = {}) => {
     socket.close();
   }
   router.push({
-    path: '/createroom'
-  })
+    path: "/createroom",
+  });
 };
-const onLoadHandle = async() => {
+const onLoadHandle = async () => {
   clearInterval(timer);
   $fetch(`${config?.baseUrl}/updateInfo`, {
     method: "POST",
@@ -211,32 +242,44 @@ const getRoomInfo = async () => {
 const changeRoomInfoShow = (flag = false) => {
   roomInfoShow.value = flag;
 };
-let timeOut = null 
+const selectEmoji = () => {
+  const Textarea = document.querySelector(".message-input");
+  cursor.value = Textarea?.selectionEnd;
+  visible.value = !visible.value;
+};
+const emojiHandle = (item) => {
+  const msg = message.value;
+  if (!cursor.value) {
+    message.value += item;
+  } else {
+    message.value = msg.slice(0, cursor.value) + item + msg.slice(cursor.value);
+  }
+};
+let timeOut = null;
 onMounted(() => {
-  const { name, roomId } = props.state
-  if (!name|| !roomId) {
-    Message.loading('房间信息、用户名不存在，3秒后自动退出')
-    timeOut && clearTimeout(timeOut)
+  const { name, roomId } = props.state;
+  if (!name || !roomId) {
+    Message.loading("房间信息、用户名不存在，3秒后自动退出");
+    timeOut && clearTimeout(timeOut);
     timeOut = setTimeout(() => {
       router.push({
-        path: '/createroom'
-      })
-
-    }, 3000)
+        path: "/createroom",
+      });
+    }, 3000);
   }
 
   connectWebSocket();
   window.addEventListener("beforeunload", onLoadHandle);
   chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);
 });
-onBeforeUnmount(()=> {
-  sendMessage('leave')
-  onLoadHandle()
+onBeforeUnmount(() => {
+  sendMessage("leave");
+  onLoadHandle();
   clearInterval(timer);
-  timeOut && clearTimeout(timeOut)
-})
+  timeOut && clearTimeout(timeOut);
+});
 onUnmounted(() => {
-  timeOut && clearTimeout(timeOut)
+  timeOut && clearTimeout(timeOut);
   clearInterval(timer);
   window.removeEventListener("beforeunload", onLoadHandle);
 });
@@ -276,6 +319,7 @@ Button {
   border-top: 1px solid #dbdbdb;
   box-sizing: border-box;
   outline: none;
+  font-size: 14px;
 }
 
 .message {
