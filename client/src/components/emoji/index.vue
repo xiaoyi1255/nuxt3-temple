@@ -2,44 +2,50 @@
   <div class="emoji">
     <div v-if="emoji.historyList?.length">
       <p>最近使用</p>
-      <ul
-        class="history"
-        :class="emoji.historyList?.length ? 'historyShow' : ''"
-      >
-        <li
-          v-for="(item, index) in [...new Set(emoji.historyList)]"
-          :key="index"
-          @click.stop="chooseEmojiDefault(item)"
-          v-html="item"
-        ></li>
+      <ul class="history" :class="emoji.historyList?.length ? 'historyShow' : ''">
+        <li v-for="(item, index) in [...new Set(emoji.historyList)]" :key="index" @click.stop="chooseEmojiDefault(item)"
+          v-html="item"></li>
       </ul>
     </div>
-    <p>所有表情</p>
-    <ul class="default">
-      <li
-        v-for="(item, index) in emojiJson"
-        :key="index"
-        @click.stop="chooseEmojiDefault(item)"
-        v-html="item"
-      ></li>
-    </ul>
+    <div v-for="items in emojiObj" :key="items.name">
+      <template v-if="items.name && items.value?.length">
+        <p>{{ items.name }}</p>
+        <ul class="default">
+          <li v-for="(item, index) in items.value" :key="index" @click.stop="chooseEmojiDefault(item)" v-html="item"></li>
+        </ul>
+      </template>
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
-import { computed, ref, reactive } from "vue";
+import { ref, reactive } from "vue";
+import { getAllTypeEmojis } from './utils'
 
 const emit = defineEmits(["emojiHandle"]);
+const props = defineProps({
+  all: {
+    type: Boolean,
+    default: false
+  }
+})
 
-const emojiList =
-  "😀,😄,😁,😆,😅,🤣,😂,🙂,🙃,😉,😊,😇,😕,😟,🙁,☹,😮,😯,😲,😳,🥺,😦,😧,😨,😰,😥,😢,😭,😱,😖,😣,😞,😓,😩,😫,🥱,😤,😡,😠,🤬,😈,👿,💀,☠,💩,🤡,👹,👺,👻,👽,👾,🤖,😺,😸,😹,😻,😼,😽,🙀,😿,😾,🙈,🙉,🙊,💌,💘,💝,💖,💗,💓,💞,💕,💟,❣,💔,❤️‍🔥,❤️‍🩹,❤,🧡,💨,💦,💫,💋,💯,❤‍🩹,❤‍🔥,🥵,🤧,🤮,🤢,🤕,🤒,😷,😴,🤤,🤯,🤠,🥳,🥸,😎,🤓,🧐,😒,😏,🤭,😘,🤩,😍,🥰,👁‍🗨,💤,💭,🗯,🗨,👁️‍🗨️,☺,😚,😙,🥲,😋,😛,😜,🤪,😝,🧎‍♀️,🧎‍➡️,👨🏿‍🦼‍➡️,💃🏻,🏇🏻,🤸🏼‍♀,🏋🏾‍♂️,🚵🏽‍♂,🛌🏾,🤟,🙎🏼‍♂️,🦍,🐴,🐗,🐎,🐺,🐻,🦇,🦃,🐢,🦎,🐍,🐉,🦂,🍉,🍨";
+const res = getAllTypeEmojis()
+console.log(res)
+const emojiObj = ref({})
 
-const emojiJson = computed(() => emojiList.split(","));
+if (props.all) {
+  emojiObj.value = res
+} else {
+  emojiObj.value = {
+    defEmojis: res.defEmojis
+  }
+}
 const emoji = reactive({
   chooseItem: "",
   historyList: [],
-  allEmoji: emojiJson,
+  allEmoji: emojiObj.value,
 });
-const chooseEmojiDefault = (item) => {
+const chooseEmojiDefault = (item: string) => {
   emoji.chooseItem = item;
   emoji.historyList.unshift(item);
   emit("emojiHandle", item);
@@ -52,13 +58,15 @@ const chooseEmojiDefault = (item) => {
 .default::-webkit-scrollbar {
   display: none;
 }
+
 .emoji {
   text-align: left;
   width: 70vw;
-  height: 100%;
+  max-height: 20vh;
   background: #fff;
-  // border: 1px solid #dcdfe6;
-  // border-radius: 1vh;
+  overflow-y: auto;
+
+
   p {
     font-size: 14px;
     padding: 1vh;
@@ -85,12 +93,14 @@ const chooseEmojiDefault = (item) => {
       background-color: #ececec;
     }
   }
+
   .history {
     height: 0;
     width: 100%;
     position: relative;
     transition: all 2.5s;
   }
+
   .historyShow {
     height: 40px;
   }

@@ -38,7 +38,7 @@
       <Popover v-model:open="visible" title="" placement="top">
         <template #content>
           <div>
-            <Emoji ref="emojiRef" @emojiHandle="emojiHandle" />
+            <Emoji @emojiHandle="emojiHandle" :all="false" />
           </div>
         </template>
       </Popover>
@@ -80,7 +80,6 @@ const usersInfo = reactive({
   activityUsers: 0,
   users: 0,
 });
-const emojiRef = ref(null);
 const cursor = ref(0);
 const roomInfo = ref({});
 const roomInfoShow = ref(false);
@@ -242,11 +241,18 @@ const getRoomInfo = async () => {
 const changeRoomInfoShow = (flag = false) => {
   roomInfoShow.value = flag;
 };
+/**
+ * 点击展示表情
+ */
 const selectEmoji = () => {
   const Textarea = document.querySelector(".message-input");
   cursor.value = Textarea?.selectionEnd;
   visible.value = !visible.value;
 };
+/**
+ * 选择表情，并把表情插入输入框
+ * @param {*} item 选择的表情
+ */
 const emojiHandle = (item) => {
   const msg = message.value;
   if (!cursor.value) {
