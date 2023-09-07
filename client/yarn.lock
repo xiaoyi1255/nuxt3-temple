@@ -4534,6 +4534,11 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
+recorder-core@^1.2.23070100:
+  version "1.2.23070100"
+  resolved "https://registry.npmmirror.com/recorder-core/-/recorder-core-1.2.23070100.tgz#c5a64ce413d12adcb325cba4382e9d869c40327c"
+  integrity sha512-R9S2taKj8Q2aePJdoLzSD784WW++VIpWhOgYw+IiM03SdyOVZV2osYgGj/l6yD7BJ8uwo4bl75d3Pg+WMp3Z1A==
+
 redis-errors@^1.0.0, redis-errors@^1.2.0:
   version "1.2.0"
   resolved "https://registry.npmmirror.com/redis-errors/-/redis-errors-1.2.0.tgz"
