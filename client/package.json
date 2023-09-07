@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@types/spark-md5": "^3.0.2",
+    "@vueup/vue-quill": "^1.2.0",
     "ant-design-vue": "^4.0.0",
     "heic2any": "^0.0.4",
     "pm2": "^5.3.0",
