@@ -62,7 +62,7 @@ const chooseEmojiDefault = (item: string) => {
 .emoji {
   text-align: left;
   width: 70vw;
-  max-height: 20vh;
+  max-height: 40vh;
   background: #fff;
   overflow-y: auto;
 
