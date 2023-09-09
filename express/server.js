@@ -7,8 +7,11 @@ const uploadRoutes = require('./routes/upload.js');
 const wechatRoutes = require('./routes/wechat.js');
 const userRouters = require('./routes/user.js');
 const path = require('path');
+const {auth} = require('./middleware/auth.js')
 const redisCkient = require('./utils/redis');
 const { MAX_AGE, WHITE_LIST, HEART_TIME } = require('./config.js');
+
+
 let roomMap = new Map();
 redisCkient.get2Map().then((res) => {
 	roomMap = res || new Map();
@@ -34,7 +37,7 @@ app.use('', wechatRoutes);
 app.use('/user', userRouters);
 
 // 在 Express 中处理除了 /ws 路由以外的请求
-app.get('/getAllRoomInfo', async (req, res) => {
+app.get('/getAllRoomInfo', auth, async (req, res) => {
 	if (!redisCkient.size) {
 		return res.send(JSON.stringify([]));
 	}
@@ -89,7 +92,7 @@ app.post('/updateInfo', async (req, res) => {
 	res.send({ msg: 'ok' });
 });
 
-app.get('/getRoomInfoByRoomId', (req, res) => {
+app.get('/getRoomInfoByRoomId',(req, res) => {
 	const { roomId } = req.query;
 	if (!roomId || !roomMap.size || !roomMap.get(roomId)) {
 		return res.send({});

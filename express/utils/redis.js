@@ -63,7 +63,6 @@ class RoomListCkient extends RedisClient {
 		if (value) {
 			const mapData = JSON.parse(value);
 			const mapFromRedis = new Map(mapData);
-			console.log('Map from Redis:', mapFromRedis);
 			return mapFromRedis;
 		} else {
 			console.log('Map not found in Redis. key:', this._key);

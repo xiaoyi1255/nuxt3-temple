@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const MySQL = require('../utils/mysql'); // 导入MySQL类
-const { SERET_KEY } = require('./../config')
+const { SERET_KEY, REFRESH_KEY } = require('./../config')
 const ErrorCodeMessage = {
   401: '',
   403: '',
@@ -27,6 +27,7 @@ const db = new MySQL(config)
  * 1. 通过用户
  */
 router.post('/login', async (req, res) => {
+  console.log(req.path)
   const { username, password } = req.query
   try {
     if (username && password) {
@@ -46,13 +47,12 @@ router.post('/login', async (req, res) => {
           username: username,
           id: queryhasUser[0]?.did
         }
-        console.log(user)
-        const token = jwt.sign(user, SERET_KEY, { expiresIn: 60 });
-        console.log(token)
-        // const token = jwt.sign(user, 'SERET_KEY', { expiresIn: '0.01h' });
+        const token = jwt.sign(user, SERET_KEY, { expiresIn: '1h' });
+        const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
         resObj.userInfo = queryhasUser[0]
         resObj.msg = '登录成功'
         resObj.code=0
+        resObj.refreshToken=refreshToken
         resObj.token = token
       } else if (queryUser?.length) { // 密码不正确
         resObj.msg = '密码不正确'
@@ -68,8 +68,10 @@ router.post('/login', async (req, res) => {
     console.log(JSON.stringify(error))
     res.send({
       code: -1,
-      msg: '报错了'
+      msg: '报错了' + JSON.stringify(error)
     })
+  } finally {
+    db.disconnect()
   }
 })
 
@@ -78,6 +80,7 @@ router.post('/login', async (req, res) => {
  * 1. 通过用户
  */
 router.post('/register', async (req, res) => {
+  console.log(req.path)
   try {
     const { username, password, gender } = req.query
     const currentDatetime = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -119,6 +122,30 @@ router.post('/register', async (req, res) => {
 })
 
 
+router.post('/refreshToken', async(req, res) => {
+  console.log(req.path)
+  const {authorization= ''} = req.headers
+  try {
+    const decoded = jwt.verify(authorization, REFRESH_KEY);
+    const user = {
+      id: decoded?.id,
+      username: decoded?.username
+    }
+    // 签发新token
+    const token = jwt.sign(user, SERET_KEY, { expiresIn: 120 });
+    res.send({
+      code: 0,
+      token: token
+    })
+    
+  } catch (error) {
+    res.send({
+      code: 1,
+      error: error,
+      msg: 'token 过期或无效'
+    })
+  }
+})
 
 
 module.exports = router

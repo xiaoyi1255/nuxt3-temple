@@ -5,10 +5,13 @@ const WHITE_LIST = ['118.89.125.27', 'localhost'];
 // 心跳检测时间
 const HEART_TIME = 1000 * 5;
 // secretKey
-const SERET_KEY = 'xiaoyi-1255'
+const SERET_KEY = 'xiaoyi-token'
+// refreshkey
+const REFRESH_KEY = 'xiaoyi-refresh'
 module.exports = {
 	MAX_AGE,
 	WHITE_LIST,
 	HEART_TIME,
 	SERET_KEY,
+	REFRESH_KEY,
 };

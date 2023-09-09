@@ -29,10 +29,12 @@
     "postcss-pxtorem": "^6.0.0"
   },
   "dependencies": {
+    "@pinia/nuxt": "^0.4.11",
     "@types/spark-md5": "^3.0.2",
     "@vueup/vue-quill": "^1.2.0",
     "ant-design-vue": "^4.0.0",
     "heic2any": "^0.0.4",
+    "pinia": "^2.1.6",
     "pm2": "^5.3.0",
     "recorder-core": "^1.2.23070100",
     "spark-md5": "^3.0.2",

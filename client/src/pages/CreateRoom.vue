@@ -50,7 +50,7 @@
   
   import { Button, Input, message, Modal, InputNumber } from "ant-design-vue";
   import { config } from '@/baseConfig'
-  
+  import { debounce } from '@/utils/function'
   // const emit = defineEmits(['changeRoom'])
 
   const router = useRouter()
@@ -79,7 +79,7 @@
     state.type = type
   };
   
-  const handleOk = async () => {
+  const handleOk = debounce(async () => {
     const reg = /^\d{4}$/
     const reg1 = /^\d{6}$/
     if (!state.room || !state.name) {
@@ -138,7 +138,7 @@
           createRoom(query)
       }
     }
-  }
+  },500)
   const getRoomListInfo = () => {
     state.loading = true
     $fetch(`${config.baseUrl}/getAllRoomInfo`, {
