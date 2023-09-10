@@ -2,6 +2,7 @@
   <Upload
     v-model:file-list="fileList"
     name="file"
+    style="cursor: pointer;"
     :action="`${config?.baseUrl}/upload/imgs`"
     :headers="headers"
     enctype="multipart/form-data"

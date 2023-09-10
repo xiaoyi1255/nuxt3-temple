@@ -24,17 +24,25 @@
       </div>
     </div>
     <div v-if="connected" class="bottom">
-      <Upload @uploadSucess="uploadSucess" />
-      <smile-outlined
-        style="font-size: 22px; margin: 0 2vh"
-        @click="selectEmoji"
-      />
-      <Button
-        style="position: absolute; right: 15vh"
-        @click="getRoomInfo"
-        :loading="roomInfoLoading"
-        >历史消息</Button
-      >
+      <Popover title="" trigger="hover">
+        <template #content> 上传文件或图片 </template>
+        <Upload @uploadSucess="uploadSucess" />
+      </Popover>
+      <Popover title="" trigger="hover">
+        <template #content> 选择表情 </template>
+        <smile-outlined
+          style="font-size: 22px; margin: 0 2vh"
+          @click="selectEmoji"
+        />
+      </Popover>
+      <Recorder :sendMessage="sendMessage" />
+      <Popover title="">
+        <template #content> 查看历史消息 </template>
+        <HistoryOutlined
+          @click="getRoomInfo"
+          style="font-size: 22px; margin: 0 2vh"
+        />
+      </Popover>
       <Popover v-model:open="visible" title="" placement="top">
         <template #content>
           <div>
@@ -42,13 +50,17 @@
           </div>
         </template>
       </Popover>
-      <Textarea
-        :maxlength="100"
-        @pressEnter="sendMessage"
-        class="message-input"
-        v-model:value.trim="message"
-        placeholder="回车发送消息..."
-      />
+      <div class="textarea-box">
+        <Textarea
+          :maxlength="100"
+          @pressEnter="sendMessage"
+          class="message-input"
+          v-model:value.trim="message"
+          placeholder="回车发送消息..."
+        >
+        </Textarea>
+        <SendOutlined class="send_icon" @click="sendMessage" />
+      </div>
     </div>
   </div>
   <RoomInfoModel
@@ -60,10 +72,14 @@
 </template>
 
 <script setup>
-import { SmileOutlined } from "@ant-design/icons-vue";
+import {
+  SmileOutlined,
+  HistoryOutlined,
+  SendOutlined,
+} from "@ant-design/icons-vue";
 import { message as Message, Button, Textarea, Popover } from "ant-design-vue";
 import Emoji from "@/components/emoji/index.vue";
-
+import Recorder from "@/components/recorder/index.vue";
 import Upload from "@/components/upload/index.vue";
 import { config } from "@/baseConfig";
 import RoomInfoModel from "./model/InfoModel.vue";
@@ -100,15 +116,16 @@ const connectWebSocket = () => {
     connected.value = true;
     retry = 0;
     flag = false;
-    clearInterval(timer);
-    timer = setInterval(() => {
-      sendMessage("ping");
-    }, 1000 * 4);
+    // clearInterval(timer);
+    // timer = setInterval(() => {
+    //   sendMessage("ping");
+    // }, 1000 * 4);
     sendMessage(true);
   };
 
   socket.onmessage = async (event) => {
     const msg = JSON.parse(event.data);
+    msg.type !== "ping" && console.log(msg);
     const { name, roomId } = props.state;
     if (roomId == msg.roomId) {
       usersInfo.totalUserList = msg.totalUserList || [];
@@ -117,6 +134,7 @@ const connectWebSocket = () => {
     }
     if (msg?.code == 200 && msg.roomId == roomId) {
       if (msg?.type != "update") {
+        console.log(msg.type);
         receivedMessages.value.push(msg);
       }
       if (msg.type === "ping") {
@@ -170,6 +188,7 @@ const reConnectWebSocket = (isAutomatic = false, retryCunt = 10) => {
 };
 let flag = false;
 const sendMessage = (type = "", file = {}) => {
+  console.log(type, file);
   if (!socket) return;
   const state = { ...props.state };
   const messageObj = {
@@ -189,7 +208,6 @@ const sendMessage = (type = "", file = {}) => {
   socket.send(JSON.stringify(messageObj));
   type !== "ping" && (message.value = "");
 };
-
 const uploadSucess = (file = {}) => {
   sendMessage("upload", file);
 };
@@ -261,6 +279,15 @@ const emojiHandle = (item) => {
     message.value = msg.slice(0, cursor.value) + item + msg.slice(cursor.value);
   }
 };
+
+const onVoice = (obj) => {
+  obj &&
+    sendMessage("blob", {
+      msgType: "blob",
+      ...obj,
+      type: "blob",
+    });
+};
 let timeOut = null;
 onMounted(() => {
   const { name, roomId } = props.state;
@@ -297,6 +324,7 @@ onUnmounted(() => {
 Button {
   padding: 5px;
 }
+
 .chat-container {
   width: 100vw;
   height: 100vh;
@@ -315,17 +343,44 @@ Button {
   }
 }
 
-.message-input {
-  width: 100%;
-  display: block;
-  height: 15vh;
-  padding: 10px;
-  border: none;
-  border-radius: 0;
-  border-top: 1px solid #dbdbdb;
-  box-sizing: border-box;
-  outline: none;
-  font-size: 14px;
+.textarea-box {
+  position: relative;
+  .message-input {
+    width: 100%;
+    display: block;
+    height: 15vh;
+    padding: 10px;
+    border: none;
+    border-radius: 0;
+    border-top: 1px solid #dbdbdb;
+    box-sizing: border-box;
+    outline: none;
+    font-size: 14px;
+    position: relative;
+  }
+  &::before {
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: -2vh;
+    right: -2vh;
+    width: 8vh;
+    height: 8vh;
+    z-index: 2;
+    background-color: #ffffff;
+  }
+  .send_icon {
+    padding: 2vh;
+    font-size: 20px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 999;
+    cursor: pointer;
+    &:hover {
+      color: aqua;
+    }
+  }
 }
 
 .message {

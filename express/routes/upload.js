@@ -35,6 +35,10 @@ router.post('/imgs', (req, res) => {
     } else if (videoFormats.includes(names[1])) {
       fileType = 'video'
     }
+    if (req.query.blobfilename) {
+      fileType = 'mp3'
+      _fileName = req.query.blobfilename
+    }
     const saveTo = path.join(__dirname, '../public/uploads/', _fileName);
     file.pipe(fs.createWriteStream(saveTo));
   });
@@ -148,6 +152,7 @@ router.post('/verifyFile', async (req, res) => {
     url
   })
 })
+
 
 
 module.exports = router;
