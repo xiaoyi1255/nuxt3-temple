@@ -7,6 +7,8 @@
       :class="isStart ? 'aqua' : ''"
       @mousedown="startRecording"
       @mouseup="uploadAudio"
+      @touchstart="startRecording"
+      @touchend="uploadAudio"
     />
   </Popover>
 </template>
