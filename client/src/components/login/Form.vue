@@ -38,7 +38,7 @@ import { reactive, ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
 import { onLogin } from '@/apis/index'
-
+import { useUserStore } from '@/store/userStore'
 interface FormState {
   username: string;
   password: string;
@@ -72,6 +72,7 @@ const formState = reactive<FormState>({
 const onFinish = debounce(async (values: any) => {
   try {
     loading.value = true
+    const userStore = useUserStore()
     const {
       code = -1,
       msg = "",
@@ -81,6 +82,8 @@ const onFinish = debounce(async (values: any) => {
       msg && message.error(msg || '连接报错，请刷新页面！');
       return;
     } else {
+      userStore.setUserInfo(userInfo)
+      console.log(userStore.userInfo)
       if (checkType.value === 'login') {
         router.push({
           path: '/createroom',

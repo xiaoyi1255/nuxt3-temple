@@ -36,7 +36,7 @@ router.post('/login', async (req, res) => {
         const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
         res.setHeader('token', token)
         res.setHeader('refresh-token', refreshToken)
-        resObj.userInfo = queryhasUser[0]
+        resObj.userInfo = {...queryhasUser[0]}
         resObj.msg = '登录成功'
         resObj.code=0
       } else if (queryUser?.length) { // 密码不正确
