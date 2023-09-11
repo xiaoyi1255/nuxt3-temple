@@ -2,17 +2,10 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const MySQL = require('../utils/mysql'); // 导入MySQL类
+const db = require('../utils/mysql'); // 导入MySQL类
 const { SERET_KEY, REFRESH_KEY } = require('./../config')
 
-const config = {
-  host: '118.89.125.27',
-  user: 'root',
-  password: 'root',
-  database: 'chat',
-  connectionLimit: 10, // 连接池最大链接数
-}
-const db = new MySQL(config)
+// const db = new MySQL(config)
 
 /**
  * 用户登录接口
@@ -23,7 +16,7 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body
   try {
     if (username && password) {
-      db.connect()
+      // db.connect()
       const sql = `SELECT * FROM user_table WHERE username = ? AND password =?;`
       const sql2 = `SELECT * FROM user_table WHERE username = ? `
       const queryhasUser = await db.query(sql, [username, password])
@@ -63,7 +56,7 @@ router.post('/login', async (req, res) => {
       msg: '报错了' + JSON.stringify(error)
     })
   } finally {
-    db.disconnect()
+    // db.disconnect()
   }
 })
 
@@ -77,7 +70,7 @@ router.post('/register', async (req, res) => {
     const { username, password, gender } = req.query
     const currentDatetime = new Date().toISOString().slice(0, 19).replace('T', ' ');
     if (username && password) {
-      db.connect()
+      // db.connect()
       const sql2 = `SELECT * FROM user_table WHERE username=?;`
       console.log(sql2)
       const queryUser = await db.query(sql2,[username])
