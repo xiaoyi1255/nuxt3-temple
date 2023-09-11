@@ -1,27 +1,12 @@
 <template>
   <div class="form">
-    <Form
-      :model="formState"
-      name="basic"
-      :label-col="{ span: 8 }"
-      :wrapper-col="{ span: 16 }"
-      autocomplete="off"
-      @finish="onFinish"
-      @finishFailed="onFinishFailed"
-    >
-      <Form.Item
-        label="用户名"
-        name="username"
-        :rules="[{ required: true, message: '请输入用户名!' }]"
-      >
+    <Form :model="formState" name="basic" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }" autocomplete="off"
+      @finish="onFinish" @finishFailed="onFinishFailed">
+      <Form.Item label="用户名" name="username" :rules="[{ required: true, message: '请输入用户名!' }]">
         <Input v-model:value="formState.username" />
       </Form.Item>
 
-      <Form.Item
-        label="密码"
-        name="password"
-        :rules="[{ required: true, message: '请输入密码!' }]"
-      >
+      <Form.Item label="密码" name="password" :rules="[{ required: true, message: '请输入密码!' }]">
         <InputPassword v-model:value="formState.password" />
       </Form.Item>
 
@@ -50,10 +35,10 @@ import {
   RadioGroup,
 } from "ant-design-vue";
 import { reactive } from "vue";
-import { config } from "@/baseConfig";
 import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
-// import { onLogin } from '@/apis/index'
+import { onLogin } from '@/apis/index'
+
 interface FormState {
   username: string;
   password: string;
@@ -84,44 +69,30 @@ const formState = reactive<FormState>({
   gender: "男",
 });
 const onFinish = debounce(async (values: any) => {
-  console.log("Success:", values);
-  const path =
-    checkType.value === "login"
-      ? config?.baseUrl + "/user/login"
-      : config?.baseUrl + "/user/register";
-    try {
-      const {
-        code = -1,
-        msg = "",
-        userInfo = "",
-        token='',
-        refreshToken=''
-      } = await $fetch(path, {
-        method: "POST",
-        params: values,
-      });
-      console.log(code,msg)
-      if (code !== 0) {
-        msg && message.error(msg || '连接报错，请刷新页面！');
-        return;
+  try {
+    const {
+      code = -1,
+      msg = "",
+      userInfo = "",
+    } = await onLogin(values);
+    if (code !== 0) {
+      msg && message.error(msg || '连接报错，请刷新页面！');
+      return;
+    } else {
+      if (checkType.value === 'login') {
+        router.push({
+          path: '/createroom',
+        })
       } else {
-        if (checkType.value === 'login') {
-          router.push({
-            path: '/createroom',
-          })
-          localStorage.setItem('token', token)
-          localStorage.setItem('refreshToken', refreshToken)
-        } else {
-          emit('changeActiveKay', {})
-        }
-        
+        emit('changeActiveKay', {})
       }
-    
-      message.success(msg);
-      
-    } catch (error) {
-      console.log(error)
+
     }
+    message.success(msg);
+
+  } catch (error) {
+    console.log(error)
+  }
 }, 500);
 
 const onFinishFailed = (errorInfo: any) => {
@@ -132,10 +103,12 @@ const onFinishFailed = (errorInfo: any) => {
 .form {
   padding-top: 5vh;
   width: 90vw;
+
   Button {
     width: 50%;
   }
 }
+
 @media screen and (min-width: 800px) {
   .form {
     margin: auto;
@@ -143,6 +116,7 @@ const onFinishFailed = (errorInfo: any) => {
     min-height: 30vh;
     min-width: 400px;
     padding-top: 5vh;
+
     Button {
       width: 100%;
     }

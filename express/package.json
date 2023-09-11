@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js --env dev",
+    "start": "yarn && node server.js --env dev",
     "deploy": "pm2 start pm2.config.js",
     "stop": "pm2 stop all && pm2 delete all"
   },

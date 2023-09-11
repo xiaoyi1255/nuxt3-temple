@@ -4,14 +4,6 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const MySQL = require('../utils/mysql'); // 导入MySQL类
 const { SERET_KEY, REFRESH_KEY } = require('./../config')
-const ErrorCodeMessage = {
-  401: '',
-  403: '',
-  502: '',
-  503: '',
-  504: '',
-  500: '',
-}
 
 const config = {
   host: '118.89.125.27',
@@ -28,7 +20,7 @@ const db = new MySQL(config)
  */
 router.post('/login', async (req, res) => {
   console.log(req.path)
-  const { username, password } = req.query
+  const { username, password } = req.body
   try {
     if (username && password) {
       db.connect()
@@ -49,11 +41,11 @@ router.post('/login', async (req, res) => {
         }
         const token = jwt.sign(user, SERET_KEY, { expiresIn: '1h' });
         const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
+        res.setHeader('token', token)
+        res.setHeader('refresh-token', refreshToken)
         resObj.userInfo = queryhasUser[0]
         resObj.msg = '登录成功'
         resObj.code=0
-        resObj.refreshToken=refreshToken
-        resObj.token = token
       } else if (queryUser?.length) { // 密码不正确
         resObj.msg = '密码不正确'
       }
@@ -124,15 +116,17 @@ router.post('/register', async (req, res) => {
 
 router.post('/refreshToken', async(req, res) => {
   console.log(req.path)
-  const {authorization= ''} = req.headers
+  const refreshToken = req.headers['refresh-token']
+  console.log(req.headers)
   try {
-    const decoded = jwt.verify(authorization, REFRESH_KEY);
+    const decoded = jwt.verify(refreshToken, REFRESH_KEY);
     const user = {
       id: decoded?.id,
       username: decoded?.username
     }
     // 签发新token
-    const token = jwt.sign(user, SERET_KEY, { expiresIn: 20 * 1000 });
+    const token = jwt.sign(user, SERET_KEY, { expiresIn: '1h' });
+    res.setHeader('token', token)
     res.send({
       code: 0,
       token: token

@@ -25,6 +25,10 @@ app.use(
 	})
 ); // 图片文件夹路径
 app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Expose-Headers', "token, refresh-token");
+  next(); // 让请求继续到下一个中间件或路由处理程序
+});
 // 创建 HTTP 服务器
 const server = http.createServer(app);
 // 创建 WebSocket 服务器
@@ -45,7 +49,10 @@ app.get('/getAllRoomInfo', auth, async (req, res) => {
 	roomMap.forEach((value, key) => {
 		value && roomInfo.push(value);
 	});
-	res.send(roomInfo);
+	res.send({
+		code: 0,
+		data: roomInfo
+	});
 });
 
 app.post('/updateInfo', async (req, res) => {
@@ -89,7 +96,7 @@ app.post('/updateInfo', async (req, res) => {
 			}
 		});
 	}
-	res.send({ msg: 'ok' });
+	res.send({ msg: 'ok', code: 0 });
 });
 
 app.get('/getRoomInfoByRoomId',(req, res) => {

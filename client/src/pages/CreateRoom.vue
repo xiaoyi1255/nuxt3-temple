@@ -3,7 +3,11 @@
       <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
       <Button @click="newRoom('join')">{{ title.join }}</Button>
       <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
-  
+      <div style="margin-top: 10vh;">
+        <Button @click="tokenService.removeToken()">清除短期token</Button>
+        <Button @click="tokenService.removeRefreshToken()">清除长期期token</Button>
+      </div>
+
     </div>
   
     <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
@@ -51,6 +55,9 @@
   import { Button, Input, message, Modal, InputNumber } from "ant-design-vue";
   import { config } from '@/baseConfig'
   import { debounce } from '@/utils/function'
+  import { getAllRoomInfo } from '@/apis/index'
+  import { tokenService } from '@/utils/auth'
+
   // const emit = defineEmits(['changeRoom'])
 
   const router = useRouter()
@@ -141,12 +148,7 @@
   },500)
   const getRoomListInfo = () => {
     state.loading = true
-    $fetch(`${config.baseUrl}/getAllRoomInfo`, {
-      method: 'GET',
-      query: {
-        t: +new Date()
-      }
-    }).then(res => {
+    getAllRoomInfo({t: +new Date()}).then(res => {
       state.roomList = res
       if (res.length) {
         state.roomListShow = true

@@ -65,7 +65,7 @@ router.get('/verifyCode', async function (req, res) {
 	if (OpenID) {
 		const token = '使用OpenID进行jwt鉴权颁发Token';
 		res.json({
-			code: 200,
+			code: 0,
 			data: { token }
 		});
 	} else {

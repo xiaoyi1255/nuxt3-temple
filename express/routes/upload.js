@@ -45,6 +45,7 @@ router.post('/imgs', (req, res) => {
 
   busboy.on('finish', function () {
     const resObj = {
+      code: 0,
       msg: '发送成功',
       url: '/static/uploads/' + _fileName,
       fileType

@@ -9,7 +9,7 @@ const { SERET_KEY } = require('./../config');
  */
 const auth = async (req, res, next) => {
 	try {
-		const token = req.headers?.authorization;
+		const token = req.headers?.token;
 		if (!token) {
 			sendErr()
 			return;
