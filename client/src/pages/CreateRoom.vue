@@ -143,6 +143,9 @@
     state.loading = true
     $fetch(`${config.baseUrl}/getAllRoomInfo`, {
       method: 'GET',
+      query: {
+        t: +new Date()
+      }
     }).then(res => {
       state.roomList = res
       if (res.length) {

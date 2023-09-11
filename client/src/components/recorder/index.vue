@@ -18,7 +18,7 @@ import { Button, Popover } from "ant-design-vue";
 import { AudioOutlined } from "@ant-design/icons-vue";
 import { config } from "@/baseConfig";
 import { onMounted } from "vue";
-import "./HZRecorder";
+// import "./HZRecorder";
 
 
 const porps = defineProps(['sendMessage'])
@@ -63,6 +63,10 @@ async function uploadAudio() {
   })
   porps.sendMessage('upload', {audioUrl:url,fileType})
 }
+
+onMounted(() => {
+  import("./HZRecorder.js")
+})
 </script>
 <style scoped>
 .aqua {

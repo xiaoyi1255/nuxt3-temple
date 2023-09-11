@@ -132,7 +132,7 @@ router.post('/refreshToken', async(req, res) => {
       username: decoded?.username
     }
     // 签发新token
-    const token = jwt.sign(user, SERET_KEY, { expiresIn: 120 });
+    const token = jwt.sign(user, SERET_KEY, { expiresIn: 20 * 1000 });
     res.send({
       code: 0,
       token: token
