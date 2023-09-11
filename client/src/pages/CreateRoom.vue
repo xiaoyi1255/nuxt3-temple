@@ -5,7 +5,7 @@
       <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
       <div style="margin-top: 10vh;">
         <Button @click="tokenService.removeToken()">清除短期token</Button>
-        <Button @click="tokenService.removeRefreshToken()">清除长期期token</Button>
+        <Button @click="tokenService.removeRefreshToken()">清除长期token</Button>
       </div>
 
     </div>
@@ -21,7 +21,12 @@
     <Modal v-if="state.roomListShow" v-model:open="state.roomListShow" title="房间列表" @ok="close">
       <div class="roomlist" v-if="state.roomList?.length">
         <div v-for="(item, index) in state.roomList" :key="index" class="roomItem">
-          <div v-if="item?.roomId">房间号: <span>{{ item.roomId }}</span>---人数: <span>{{ item.userList?.length }}</span></div>
+          <div v-if="item?.roomId">
+            房间号: <span>{{ item.roomId }}</span>---
+            人数: <span>{{ item.userList?.length }}</span>---
+            房主：<span>{{ item.createUser }}</span>
+          </div>
+          <p></p>
           <div v-if="item.userList?.length" class="user">
             房间成员：
             <div v-for="(user,index1) in item.userList" :key="index1">
@@ -34,6 +39,18 @@
     </Modal>
   </template>
   <script lang="ts" setup>
+  useHead({
+    titleTemplate: '创建 | 加入房间', // 可以写模板
+    viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+    charset: 'utf-8',
+    meta: [
+      { name: 'description', content: 'chat' }
+    ],
+    // body添加类名
+    bodyAttrs: {
+      class: 'test'
+    }
+  })
   type DataType = {
     newMessage: string;
     room: number | '';
@@ -243,6 +260,7 @@
     background-color: #eee;
     padding: 2vh 1vh;
     border-radius: 1vh;
+    margin-top: 1vh;
     span {
       color: #007bff;
       font-weight: 500;

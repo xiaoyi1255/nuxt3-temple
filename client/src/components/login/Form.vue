@@ -17,7 +17,7 @@
       </Form.Item>
 
       <Form.Item :wrapper-col="{ offset: 8, span: 16 }">
-        <Button type="primary" html-type="submit">{{
+        <Button type="primary" html-type="submit" :loading="loading">{{
           checkType === "login" ? "登 录" : "注 册"
         }}</Button>
       </Form.Item>
@@ -34,7 +34,7 @@ import {
   Space,
   RadioGroup,
 } from "ant-design-vue";
-import { reactive } from "vue";
+import { reactive, ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
 import { onLogin } from '@/apis/index'
@@ -56,6 +56,7 @@ const options = reactive([
   { label: "男", value: "男" },
   { label: "女", value: "女" },
 ]);
+const loading = ref(false)
 watch(
   () => props.checkType,
   (val) => {
@@ -70,6 +71,7 @@ const formState = reactive<FormState>({
 });
 const onFinish = debounce(async (values: any) => {
   try {
+    loading.value = true
     const {
       code = -1,
       msg = "",
@@ -86,12 +88,12 @@ const onFinish = debounce(async (values: any) => {
       } else {
         emit('changeActiveKay', {})
       }
-
     }
     message.success(msg);
-
   } catch (error) {
-    console.log(error)
+    message.error(JSON.stringify(error));
+  } finally {
+    loading.value = false
   }
 }, 500);
 
