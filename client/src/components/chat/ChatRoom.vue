@@ -116,10 +116,10 @@ const connectWebSocket = () => {
     connected.value = true;
     retry = 0;
     flag = false;
-    // clearInterval(timer);
-    // timer = setInterval(() => {
-    //   sendMessage("ping");
-    // }, 1000 * 4);
+    clearInterval(timer);
+    timer = setInterval(() => {
+      sendMessage("ping");
+    }, 1000 * 4);
     sendMessage(true);
   };
 
@@ -172,6 +172,9 @@ let retry = 0;
  */
 const reConnectWebSocket = (isAutomatic = false, retryCunt = 10) => {
   flag = false;
+  if (!location.pathname.includes('/chat')) {
+    return
+  }
   if (!isAutomatic) {
     console.log(retry, "自动重连次数");
     retry++;
