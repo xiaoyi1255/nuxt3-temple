@@ -11,10 +11,10 @@
     </div>
   
     <Modal v-if="state.roomShow" v-model:open="state.roomShow" :title="title[state.type]" @ok="handleOk">
-      <InputNumber style="margin-top: 2vh; display: block;width: 100%;" v-model:value="state.room" maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
-      <Input style="margin-top: 2vh; display: block;width: 100%;" maxlength="8" v-model:value="state.name" @keyup.enter="handleOk"
+      <InputNumber style="margin-top: 2vh; display: block;width: 100%;" v-model:value="state.room" :maxlength="4"  @keyup.enter="handleOk" placeholder="请输入4位数字房间号" />
+      <Input style="margin-top: 2vh; display: block;width: 100%;" :maxlength="8" v-model:value="state.name" @keyup.enter="handleOk"
         placeholder="请输入姓名" />
-      <InputNumber style="margin-top: 2vh; display: block;width: 100%;" maxlength="6" v-model:value="state.password" @keyup.enter="handleOk"
+      <InputNumber style="margin-top: 2vh; display: block;width: 100%;" :maxlength="6" v-model:value="state.password" @keyup.enter="handleOk"
         placeholder="(选填)请输入密码6位数字" />
     </Modal>
   

@@ -4428,11 +4428,6 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
-recorder-core@^1.2.23070100:
-  version "1.2.23070100"
-  resolved "https://registry.npmmirror.com/recorder-core/-/recorder-core-1.2.23070100.tgz#c5a64ce413d12adcb325cba4382e9d869c40327c"
-  integrity sha512-R9S2taKj8Q2aePJdoLzSD784WW++VIpWhOgYw+IiM03SdyOVZV2osYgGj/l6yD7BJ8uwo4bl75d3Pg+WMp3Z1A==
-
 redis-errors@^1.0.0, redis-errors@^1.2.0:
   version "1.2.0"
   resolved "https://registry.npmmirror.com/redis-errors/-/redis-errors-1.2.0.tgz#eb62d2adb15e4eaf4610c04afe1529384250abad"
@@ -5152,11 +5147,6 @@ uuid@^3.2.1:
   version "3.4.0"
   resolved "https://registry.npmmirror.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
-
-uuid@^9.0.0:
-  version "9.0.0"
-  resolved "https://registry.npmmirror.com/uuid/-/uuid-9.0.0.tgz#592f550650024a38ceb0c562f2f6aa435761efb5"
-  integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
 
 vite-node@^0.33.0:
   version "0.33.0"

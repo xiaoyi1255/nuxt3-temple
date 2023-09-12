@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     ssr: false, // 默认为true false 则是 csr
     app: {
       head: {
-        title: 'project name',
+        title: '小易',
         meta: [],
         script: [],
         link: [],
@@ -14,6 +14,10 @@ export default defineNuxtConfig({
       },
     },
     build: {
+    },
+    devServer: {
+      port: 80,
+      host: 'localhost',
     },
     alias: {
         "@/": "./src/"
