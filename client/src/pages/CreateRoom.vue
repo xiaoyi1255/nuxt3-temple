@@ -7,6 +7,9 @@
         <Button @click="tokenService.removeToken()">清除短期token</Button>
         <Button @click="tokenService.removeRefreshToken()">清除长期token</Button>
       </div>
+      <div>
+        <Button @click="addFriend">添加好友</Button>
+      </div>
 
     </div>
   
@@ -37,6 +40,8 @@
       </div>
       <div v-else>空空如也~~</div>
     </Modal>
+
+    <ModalAddFriend v-model:showModal="state.addFriendModalShow" />
   </template>
   <script lang="ts" setup>
   useHead({
@@ -57,6 +62,8 @@
     roomList: any[];
     roomShow: boolean;
     roomListShow: boolean;
+    addFriendModalShow: boolean;
+    addType:  'friend' | 'group'
     messages: {
       id: Date;
       text: string;
@@ -83,6 +90,8 @@
     newMessage: "",
     roomShow: false,
     roomListShow: false,
+    addFriendModalShow: false,
+    addType: 'friend',
     roomList: [],
     room: '',
     name: '',
@@ -102,6 +111,10 @@
     state.roomShow = true;
     state.type = type
   };
+
+  const addFriend = () => {
+    state.addFriendModalShow = true
+  }
   
   const handleOk = debounce(async () => {
     const reg = /^\d{4}$/

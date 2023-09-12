@@ -135,4 +135,23 @@ router.post('/refreshToken', async(req, res) => {
 })
 
 
+router.post('/getUserList', async(req, res) => {
+  const userName = req.body.name
+  if (!userName) {
+    res.send({
+      code: -1,
+      data: [],
+      msg: '请输入用户名称'
+    })
+  } else {
+    const sql = `SELECT id,uid,username,gender FROM user_table WHERE username like ?;`
+    const [userList] = await db.query(sql, [`%${userName}%`])
+    res.send({
+      code: 0,
+      data: userList
+    })
+  }
+
+})
+
 module.exports = router

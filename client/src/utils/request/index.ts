@@ -1,6 +1,6 @@
 import type { AxiosProgressEvent, AxiosResponse, GenericAbortSignal } from 'axios'
 import request from './axios'
-
+import { useUserStore } from '~/store/userStore'
 export interface HttpOption {
   url: string
   data?: any
@@ -38,8 +38,9 @@ function http<T = any>(
 
   method = method || 'GET'
 
-  const params = Object.assign(typeof data === 'function' ? data() : data ?? {}, {})
-
+  const _params = Object.assign(typeof data === 'function' ? data() : data ?? {}, {})
+  const { uid='' } = useUserStore().userInfo
+  const params = {t: +new Date(),uid, ..._params}
   return method === 'GET'
     ? request.get(url, { params, signal, onDownloadProgress }).then(successHandler, failHandler)
     : request.post(url, params, { headers, signal, onDownloadProgress }).then(successHandler, failHandler)
