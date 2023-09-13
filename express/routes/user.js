@@ -4,6 +4,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const db = require('../utils/mysql'); // 导入MySQL类
 const { SERET_KEY, REFRESH_KEY } = require('./../config')
+const {auth} = require('../middleware/auth.js')
 
 // const db = new MySQL(config)
 
@@ -36,7 +37,7 @@ router.post('/login', async (req, res) => {
         const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
         res.setHeader('token', token)
         res.setHeader('refresh-token', refreshToken)
-        resObj.userInfo = {...queryhasUser[0]}
+        resObj.userInfo = {...queryhasUser[0][0]}
         resObj.msg = '登录成功'
         resObj.code=0
       } else if (queryUser?.length) { // 密码不正确
@@ -136,8 +137,8 @@ router.post('/refreshToken', async(req, res) => {
 
 
 router.post('/getUserList', async(req, res) => {
-  const userName = req.body.name
-  if (!userName) {
+  const {username, uid} = req.body
+  if (!username) {
     res.send({
       code: -1,
       data: [],
@@ -145,13 +146,53 @@ router.post('/getUserList', async(req, res) => {
     })
   } else {
     const sql = `SELECT id,uid,username,gender FROM user_table WHERE username like ?;`
-    const [userList] = await db.query(sql, [`%${userName}%`])
+    // const sql = `SELECT
+    //                 u.username,
+    //                 u.gender,
+    //                 CASE
+    //                 WHEN f.user_id=? OR f.friend_id=? THEN '已建立关系'
+    //                   ELSE '未建立关系'
+    //                 END AS relationship_status
+    //             FROM
+    //                 user_table u
+    //             LEFT JOIN
+    //                 friendship f ON (f.friend_id = ? OR f.)
+    //             WHERE
+    //                 u.username LIKE ?;`
+    const [userList] = await db.query(sql, [uid,uid, uid,`%${username}%`])
     res.send({
       code: 0,
       data: userList
     })
   }
 
+})
+
+router.post('/addFriend',auth, async(req,res) => {
+  const { uid, friendId, info=''} = req.body
+  if (!uid || ! friendId) {
+    res.end({
+      code: -1,
+      msg: '参数错误',
+    })
+    return
+  } else {
+    const sql = `SELECT * FROM user_table WHERE uid=?;`
+    const [rows1, fields1] = await db.query(sql, uid)
+    const [rows2, fields2] = await db.query(sql, friendId)
+    console.log(rows1,rows2, fields1)
+    if (rows1.length && rows2.length) {
+      const sql = 'INSERT INTO friendship (user_id, friend_id, status, info) VALUES (?, ?, ?, ?)';
+      const [row3, fields3] = await db.query(sql, [uid,friendId, 'pending', info])
+      if(row3.affectedRows) { // 插入成功
+        res.send({
+          code: 0,
+          data: {},
+          msg: '好友验证，发送成功！'
+        })
+      }
+    }
+  }
 })
 
 module.exports = router

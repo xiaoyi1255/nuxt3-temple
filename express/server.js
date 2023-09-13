@@ -26,6 +26,9 @@ app.use(
 ); // 图片文件夹路径
 app.use(cors());
 app.use((req, res, next) => {
+	console.log(req.path)
+	console.log(req.query)
+	console.log(req.body)
   res.setHeader('Access-Control-Expose-Headers', "token, refresh-token");
   next(); // 让请求继续到下一个中间件或路由处理程序
 });

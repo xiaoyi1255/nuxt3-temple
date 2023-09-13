@@ -1,5 +1,5 @@
 <template>
-  <Modal v-if="showModal" v-model:open="showModal" :title="state.type == '好友' ? '添加好友' : '添加群聊'" :footer="null"
+  <Modal v-if="showModal" v-model:open="showModal" :title="state.type == '好友' ? '添加好友' : '添加群聊'" :footer="[]"
     :keyboard="true">
     <Segmented v-model:value="state.type" :options="state.options" />
     <div class="input">
@@ -11,12 +11,18 @@
       <div v-for="(item, index) in state.list" :key="item.uid">
         <div class="friends-item">
           <div class="left">
-            <div>用户：{{ index }}</div>
-            <span class="r20">昵称：<span v-html="changeTxt('' + item.username)"></span></span>
-            <span class="">性别：{{ item.gender || '未知' }}</span>
+            <div>
+              <Avatar size="large" :style="{ backgroundColor: '#f56a00', verticalAlign: 'middle' }">
+                {{ item.username }}
+              </Avatar>
+            </div>
+            <div class="left-content">
+              <span class="r20">昵称：<span v-html="changeTxt('' + item.username)"></span></span>
+              <span class="">性别：{{ item.gender || '未知' }}</span>
+            </div>
           </div>
           <div class="right">
-            <Button>添加</Button>
+            <Button @click="onAddFriend(item)">添加</Button>
           </div>
         </div>
       </div>
@@ -25,25 +31,43 @@
     <div v-else>
 
     </div>
+
   </Modal>
+
 </template>
 
 <script setup lang="ts">
-import { Button, InputSearch, message, Modal, InputNumber, Segmented } from "ant-design-vue";
-import { statisticToken } from "ant-design-vue/es/theme/internal";
+import { Button, InputSearch, message, Modal, Segmented, Avatar } from "ant-design-vue";
 import { ref, reactive } from 'vue'
 import { getUserList, addFriend } from '@/apis/index'
+import { useUserStore } from "@/store/userStore";
+import { useRouter } from "nuxt/app";
 interface Props {
   showModal: boolean
+}
+interface State {
+  name: string
+  type: string
+  loading: boolean
+  options: string[]
+  list: UserInfo[]
+}
+interface UserInfo {
+  username: string
+  gender: string
+  uid: string | number
+
 }
 
 const props = defineProps<Props>()
 
 const emit = defineEmits(['update:showModal'])
 
-const state = reactive({
+const router = useRouter();
+const userStore = useUserStore()
+
+const state = reactive<State>({
   name: '',
-  showModal: false,
   type: '好友',
   loading: false,
   options: ['好友', '群组'],
@@ -60,22 +84,34 @@ const showModal = computed({
 const onSearch = async (value: string) => {
   state.loading = true
   try {
-    const res = await getUserList({ name: value })
+    const res = await getUserList({ username: value }) as unknown as Item[]
     state.loading = false
     state.list = res
 
   } catch (error) {
     state.loading = false
-
   }
+}
+
+const onAddFriend = async(item: UserInfo) => {
+  console.log(userStore.userInfo)
+  if (!userStore.userInfo.uid) {
+    message.error('请进行登录')
+    setTimeout(() => {
+      router.push('/login')
+    }, 3000)
+  }
+  const query = {
+    uid: userStore.userInfo.uid,
+    friendId: item.uid
+  }
+  const res = await addFriend(query)
 }
 
 const changeTxt = (str: string): string => {
   if (!state.name) return str;
   const reg = new RegExp(`(${state.name})`, 'gi');
-  const transTxt = str.replace(reg, '<em>$1</em>');
-  console.log(transTxt);
-  return transTxt;
+  return str.replace(reg, '<em>$1</em>');
 };
 
 
@@ -87,6 +123,7 @@ const changeTxt = (str: string): string => {
 }
 
 .friends {
+  font-size: 12px;
   height: 40vh;
   overflow-y: scroll;
   margin-top: 2vh;
@@ -114,6 +151,16 @@ const changeTxt = (str: string): string => {
     &:hover {
       box-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
       
+    }
+    .left {
+      display: flex;
+      align-items: center;
+      &-content {
+        display: flex;
+        flex-direction: column;
+        margin-left: 1vh;
+
+      }
     }
   }
 }

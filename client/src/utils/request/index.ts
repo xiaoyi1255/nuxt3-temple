@@ -1,6 +1,7 @@
 import type { AxiosProgressEvent, AxiosResponse, GenericAbortSignal } from 'axios'
 import request from './axios'
 import { useUserStore } from '~/store/userStore'
+import { message } from 'ant-design-vue'
 export interface HttpOption {
   url: string
   data?: any
@@ -26,6 +27,9 @@ function http<T = any>(
   const successHandler = (res: AxiosResponse<Response<T>>) => {
     // 后端只有code =0 才是正常数据
     if (res.data?.code === 0) return res.data?.data ? res.data?.data : res.data
+    if (res.data?.msg || res.data) {
+      message.error(res.data?.msg || res.data)
+    }
     return Promise.reject(res.data)
   }
 

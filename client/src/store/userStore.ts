@@ -4,13 +4,23 @@ import { store } from '@/store/helper'
 // 定义状态类型
 interface State {
   isLogin: boolean;
-  userInfo: any;
+  userInfo: UserInfo;
+}
+
+interface UserInfo {
+  username: string
+  gender?: string
+  uid: string | number
+
 }
 
 export const useUserStore = defineStore('user', {
   state:():State =>({
     isLogin: false,
-    userInfo: {}
+    userInfo: {
+      username: '',
+      uid: ''
+    }
   }),
   getters: {
 
