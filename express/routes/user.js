@@ -22,7 +22,6 @@ router.post('/login', async (req, res) => {
       const sql2 = `SELECT * FROM user_table WHERE username = ? `
       const queryhasUser = await db.query(sql, [username, password])
       const queryUser = await db.query(sql2, [username])
-      console.log(queryhasUser, queryUser)
       const resObj = {
         code: -1,
         userInfo: null,
@@ -37,7 +36,7 @@ router.post('/login', async (req, res) => {
         const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
         res.setHeader('token', token)
         res.setHeader('refresh-token', refreshToken)
-        resObj.userInfo = {...queryhasUser[0][0]}
+        resObj.userInfo = {...queryhasUser[0]}
         resObj.msg = '登录成功'
         resObj.code=0
       } else if (queryUser?.length) { // 密码不正确
@@ -68,14 +67,12 @@ router.post('/login', async (req, res) => {
 router.post('/register', async (req, res) => {
   console.log(req.path)
   try {
-    const { username, password, gender } = req.query
+    const { username, password, gender } = req.body
     const currentDatetime = new Date().toISOString().slice(0, 19).replace('T', ' ');
     if (username && password) {
       // db.connect()
       const sql2 = `SELECT * FROM user_table WHERE username=?;`
-      console.log(sql2)
       const queryUser = await db.query(sql2,[username])
-      console.log(queryUser, 11)
       const resObj = {
         code: -1,
         userInfo: null,
@@ -85,6 +82,7 @@ router.post('/register', async (req, res) => {
         const inset_sql = `INSERT INTO chat.user_table (did, username, password, registration_time, gender) VALUES (?, ?,?, ?, ?)`
         console.log(inset_sql)
         const results = await db.query(inset_sql, [uuidv4(), username, password,currentDatetime, gender])
+        console.log(results)
         if (results.affectedRows === 1) {
           console.log('Insertion successful.');
           resObj.code = 0

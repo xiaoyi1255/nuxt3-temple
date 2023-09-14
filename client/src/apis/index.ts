@@ -3,6 +3,7 @@ import { tokenService } from '@/utils/auth'
 
 enum urls  {
   login = '/user/login',
+  register='/user/register',
   addFriend = '/user/addFriend',
   getUserList = '/user/getUserList',
   getAllRoomInfo= '/getAllRoomInfo',
@@ -23,6 +24,7 @@ const refreshToken = async(): Promise<boolean> => {
 }
 // 登录
 const onLogin = (data:any): Promise<T> => http.post({url: urls.login, data})
+const onRegister = (data:any): Promise<T> => http.post({url: urls.register, data})
 // 获取所有房间信息
 const getAllRoomInfo = (data:any) => http.get({url: urls.getAllRoomInfo, data})
 // 添加好友
@@ -36,4 +38,5 @@ export  {
   refreshToken,
   addFriend,
   getUserList,
+  onRegister,
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="main">
     <div>
-      <Tabs v-model:activeKey="activeKey" :size="size">
+      <Tabs v-model:activeKey="activeKey" size="large">
         <TabPane key="login" tab="登录">
           <div class="login">
             <FormCom :checkType="'login'" />

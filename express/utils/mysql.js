@@ -15,7 +15,8 @@ async function query(sql, values) {
     const connection = await pool.getConnection();
     const [rows, fields] = await connection.query(sql, values);
     connection.release();
-    return [rows, fields];
+    console.log(rows, '结果')
+    return rows;
   } catch (error) {
     throw error;
   }

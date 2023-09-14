@@ -37,7 +37,7 @@ import {
 import { reactive, ref, computed, watch } from "vue";
 import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
-import { onLogin } from '@/apis/index'
+import { onLogin, onRegister } from '@/apis/index'
 import { useUserStore } from '@/store/userStore'
 interface FormState {
   username: string;
@@ -63,7 +63,7 @@ watch(
     checkType.value = val;
   }
 );
-const checkType = computed(() => props.checkType);
+const checkType = ref(props.checkType);
 const formState = reactive<FormState>({
   username: "",
   password: "",
@@ -71,13 +71,15 @@ const formState = reactive<FormState>({
 });
 const onFinish = debounce(async (values: any) => {
   try {
+    console.log(values, checkType.value)
     loading.value = true
     const userStore = useUserStore()
+    const promise = checkType.value == 'login' ? onLogin(values) : onRegister(values)
     const {
       code = -1,
       msg = "",
       userInfo = "",
-    } = await onLogin(values);
+    } = await promise;
     if (code !== 0) {
       msg && message.error(msg || '连接报错，请刷新页面！');
       return;
@@ -94,7 +96,7 @@ const onFinish = debounce(async (values: any) => {
     }
     message.success(msg);
   } catch (error) {
-    message.error(JSON.stringify(error));
+    // message.error(JSON.stringify(error));
   } finally {
     loading.value = false
   }
