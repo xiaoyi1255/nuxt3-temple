@@ -12,6 +12,7 @@ const redisCkient = require('./utils/redis');
 const { MAX_AGE, WHITE_LIST, HEART_TIME } = require('./config.js');
 
 
+app.use(cors());
 let roomMap = new Map();
 redisCkient.get2Map().then((res) => {
 	roomMap = res || new Map();
@@ -24,7 +25,6 @@ app.use(
 		maxAge: MAX_AGE
 	})
 ); // 图片文件夹路径
-app.use(cors());
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Expose-Headers', "token, refresh-token");
   next(); // 让请求继续到下一个中间件或路由处理程序
