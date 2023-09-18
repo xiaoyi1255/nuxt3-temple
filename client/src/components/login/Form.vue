@@ -86,12 +86,11 @@ const onFinish = debounce(async (values: any) => {
       return;
     } else {
       userStore.setUserInfo(userInfo)
-      console.log(userStore.userInfo)
+      userInfoService.setUserInfo(userInfo)
       if (checkType.value === 'login') {
         router.push({
           path: '/createroom',
         })
-        userInfoService.setUserInfo(userInfo)
       } else {
         emit('changeActiveKay', {})
       }

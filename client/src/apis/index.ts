@@ -9,6 +9,7 @@ enum urls  {
   getAllRoomInfo= '/getAllRoomInfo',
   refreshToken = '/user/refreshToken',
   getUserListByName='/user/getUserListByName',
+  verifyCode="verifyCode",
 }
 
 interface LoginRes {
@@ -33,6 +34,9 @@ const addFriend = (data:any) => http.post({url: urls.addFriend, data})
 const getUserList = (data:any) => http.post({url: urls.getUserList, data})
 const getUserListByName = (data:any) => http.post({url: urls.getUserListByName, data})
 
+const verifyCode = (data:any) => http.get({url: urls.verifyCode, data})
+
+
 export  {
   onLogin,
   getAllRoomInfo,
@@ -41,4 +45,5 @@ export  {
   getUserList,
   getUserListByName,
   onRegister,
+  verifyCode,
 }

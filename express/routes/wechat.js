@@ -3,6 +3,9 @@ const express = require('express');
 const jsSHA = require('jssha');
 const router = express.Router();
 const redisCkient = require('../utils/redis');
+const db = require('../utils/mysql'); // 导入MySQL类
+const { SERET_KEY, REFRESH_KEY } = require('./../config')
+const jwt = require('jsonwebtoken');
 
 router.get('/wechat', (req, res, next) => {
 	const token = 'xiaoyi1255';
@@ -58,16 +61,52 @@ router.post('/wechat', function (req, res) {
 	});
 });
 
+// 验证成功就去注册+登录
 router.get('/verifyCode', async function (req, res) {
 	const { code } = req.query;
 	const OpenID = await redisCkient.get(code);
-	console.log(OpenID);
 	if (OpenID) {
-		const token = '使用OpenID进行jwt鉴权颁发Token';
-		res.json({
-			code: 0,
-			data: { token }
-		});
+		const sql = `SELECT username,uid,gender,did FROM user_table WHERE did = ? `
+		const queryhasUser = await db.query(sql, [OpenID])
+		if (!queryhasUser.length) {
+			// 注册并登录
+			const user = {
+				username: `user${code}`,
+				did: OpenID,
+				uid: code,
+				gender: ''
+			}
+			const inset_sql = `INSERT INTO chat.user_table (did, username, password) VALUES (?, ?,?)`
+        console.log(inset_sql)
+        const results = await db.query(inset_sql, [user.did, user.username, 123456])
+				if (results.affectedRows === 1) {
+          console.log('Insertion successful.');
+					createJwt(user, res)
+					res.json({
+						code: 0,
+						data: { 
+							userInfo: user,
+							msg: "登录成功！！！"
+						}
+					})
+        }
+		} else {
+			// const token = '使用OpenID进行jwt鉴权颁发Token';
+			const user = {
+				username: queryhasUser[0]?.username,
+				did: queryhasUser[0]?.did,
+				uid: queryhasUser[0]?.uid,
+				gender: queryhasUser[0]?.gender,
+			}
+			createJwt(user, res)
+			res.json({
+				code: 0,
+				data: { 
+					userInfo: queryhasUser[0],
+					msg: '登录成功！'
+				 }
+			});
+		}
 	} else {
 		res.json({
 			code: 400,
@@ -93,6 +132,13 @@ function sendTextMsg(toUser, fromUser, content) {
 	resultXml += '<MsgType><![CDATA[text]]></MsgType>';
 	resultXml += '<Content><![CDATA[' + content + ']]></Content></xml>';
 	return resultXml;
+}
+
+function createJwt(user, res) {
+	const token = jwt.sign(user, SERET_KEY, { expiresIn: '1h' });
+	const refreshToken = jwt.sign(user, REFRESH_KEY, { expiresIn: '7d' });
+	res.setHeader('token', token)
+	res.setHeader('refresh-token', refreshToken)
 }
 
 module.exports = router;

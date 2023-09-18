@@ -11,7 +11,7 @@
           v-model:value="codeValue"
           style="width: 70%"
           placeholder="请输入验证码"
-          :maxlength="6"
+          maxlength="6"
         />
         <Button type="primary" @click="handleSendCode">
           <template #icon>
@@ -31,7 +31,13 @@
 import { ref } from "vue";
 import { Button, Input, message as ms } from "ant-design-vue";
 import { debounce } from "@/utils/function";
-import { config } from "@/baseConfig";
+import { verifyCode } from '@/apis/index'
+import { useRouter } from 'vue-router'
+import { userInfoService } from '@/utils/auth'
+import { useUserStore } from '@/store/userStore'
+
+
+const router = useRouter()
 
 const codeValue = ref();
 const handleSendCode = debounce(async function () {
@@ -41,19 +47,18 @@ const handleSendCode = debounce(async function () {
     return;
   }
   try {
-    const res = (await $fetch(config.wechatBaseUrl + "/", {
-      method: "POST",
-      query: {
-        code: codeValue.value,
-      },
-    })) as any;
-    const { token = "" } = res.data || {};
-    if (token) {
-      localStorage.setItem("token", token);
-      ms.success("登录成功！！");
-    }
+    const { userInfo = {}, msg } = await verifyCode({code: codeValue.value}) as any;
+    if (userInfo?.uid) {
+      const userStore = useUserStore()
+      userStore.setUserInfo(userInfo)
+      userInfoService.setUserInfo(userInfo)
+      ms.success(msg);
+      router.push({
+        path: '/createroom',
+      })
+  }
   } catch (error: any) {
-    ms.error(error?.msg);
+    // ms.error(error?.msg);
   }
 }, 600);
 /* eslint-enable */

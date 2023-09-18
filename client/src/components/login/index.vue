@@ -12,7 +12,7 @@
             <FormCom :checkType="'register'" @changeActiveKay="changeActiveKay" />
           </div>
         </TabPane>
-        <TabPane key="scanCode" tab="扫码登录" v-if="false">
+        <TabPane key="scanCode" tab="扫码登录">
           <div class="scancode">
             <QcanCode />
           </div>
