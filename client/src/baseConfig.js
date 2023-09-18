@@ -6,8 +6,8 @@ const config = {
 }
 
 if (dev) {
-    config.baseUrl = 'http://localhost:3000'
-    config.baseWsUrl = 'ws://localhost:3000'
+    config.baseUrl = 'http://localhost:3001'
+    config.baseWsUrl = 'ws://localhost:3001'
 }
 export {
     config,

@@ -1,5 +1,11 @@
 import { LocalStorage } from './cache';
 
+interface UserInfo {
+  uid: number
+  did?: string
+  gender?: string
+  usename: string
+}
 class TokenService {
 
   get token(){
@@ -29,8 +35,22 @@ class TokenService {
   }
 }
 
+class UserInfoService {
+
+  get userInfo(){
+    return LocalStorage.getItem<string>('userInfo');
+  }
+
+  setUserInfo(userInfo: UserInfo) {
+    LocalStorage.setItem('userInfo', JSON.stringify(userInfo));
+  }
+
+}
+
 const tokenService = new TokenService();
+const userInfoService = new UserInfoService()
 
 export {
-  tokenService
+  tokenService,
+  userInfoService,
 };

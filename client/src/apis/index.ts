@@ -8,6 +8,7 @@ enum urls  {
   getUserList = '/user/getUserList',
   getAllRoomInfo= '/getAllRoomInfo',
   refreshToken = '/user/refreshToken',
+  getUserListByName='/user/getUserListByName',
 }
 
 interface LoginRes {
@@ -30,7 +31,7 @@ const getAllRoomInfo = (data:any) => http.get({url: urls.getAllRoomInfo, data})
 // 添加好友
 const addFriend = (data:any) => http.post({url: urls.addFriend, data})
 const getUserList = (data:any) => http.post({url: urls.getUserList, data})
-
+const getUserListByName = (data:any) => http.post({url: urls.getUserListByName, data})
 
 export  {
   onLogin,
@@ -38,5 +39,6 @@ export  {
   refreshToken,
   addFriend,
   getUserList,
+  getUserListByName,
   onRegister,
 }

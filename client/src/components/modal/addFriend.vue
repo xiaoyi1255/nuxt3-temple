@@ -8,7 +8,7 @@
     </div>
 
     <div class="friends" v-if="state.type == '好友'">
-      <div v-for="(item, index) in state.list" :key="item.uid">
+      <div v-if="state.list.length" v-for="(item, index) in state.list" :key="item.uid">
         <div class="friends-item">
           <div class="left">
             <div>
@@ -26,6 +26,7 @@
           </div>
         </div>
       </div>
+      <Empty v-else />
 
     </div>
     <div v-else>
@@ -37,11 +38,12 @@
 </template>
 
 <script setup lang="ts">
-import { Button, InputSearch, message, Modal, Segmented, Avatar } from "ant-design-vue";
+import { Button, InputSearch, message, Modal, Segmented, Avatar, Empty } from "ant-design-vue";
 import { ref, reactive } from 'vue'
-import { getUserList, addFriend } from '@/apis/index'
+import { getUserListByName, addFriend } from '@/apis/index'
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from "nuxt/app";
+import { userInfoService } from '@/utils/auth'
 interface Props {
   showModal: boolean
 }
@@ -84,8 +86,9 @@ const showModal = computed({
 const onSearch = async (value: string) => {
   state.loading = true
   try {
-    const res = await getUserList({ username: value }) as unknown as Item[]
+    const res = await getUserListByName({ username: value }) as unknown as Item[]
     state.loading = false
+    console.log(res)
     state.list = res
 
   } catch (error) {
@@ -94,18 +97,30 @@ const onSearch = async (value: string) => {
 }
 
 const onAddFriend = async(item: UserInfo) => {
-  console.log(userStore.userInfo)
-  if (!userStore.userInfo.uid) {
+  // console.log(userStore.userInfo)
+  const userInfo = JSON.parse(userInfoService.userInfo || '{}')
+  if (!userInfo.uid) {
     message.error('请进行登录')
     setTimeout(() => {
       router.push('/login')
     }, 3000)
   }
   const query = {
-    uid: userStore.userInfo.uid,
     friendId: item.uid
   }
-  const res = await addFriend(query)
+  const { status='', msg=''} = await addFriend(query)
+  if (status) {
+    switch (status) {
+      case 'success':
+        message.success('你们已经是好友关系')
+        break;
+        default:
+        message.info('你与'+ item.username + '关系状态为：' + status)
+        break;
+    }
+    return
+  }
+  message.warning(msg)
 }
 
 const changeTxt = (str: string): string => {

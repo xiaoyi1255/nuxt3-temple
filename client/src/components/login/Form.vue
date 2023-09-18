@@ -39,6 +39,7 @@ import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
 import { onLogin, onRegister } from '@/apis/index'
 import { useUserStore } from '@/store/userStore'
+import { userInfoService } from '@/utils/auth'
 interface FormState {
   username: string;
   password: string;
@@ -90,6 +91,7 @@ const onFinish = debounce(async (values: any) => {
         router.push({
           path: '/createroom',
         })
+        userInfoService.setUserInfo(userInfo)
       } else {
         emit('changeActiveKay', {})
       }

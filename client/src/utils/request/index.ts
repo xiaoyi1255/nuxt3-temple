@@ -2,6 +2,8 @@ import type { AxiosProgressEvent, AxiosResponse, GenericAbortSignal } from 'axio
 import request from './axios'
 import { useUserStore } from '~/store/userStore'
 import { message } from 'ant-design-vue'
+import { userInfoService } from '@/utils/auth'
+
 export interface HttpOption {
   url: string
   data?: any
@@ -43,8 +45,8 @@ function http<T = any>(
   method = method || 'GET'
 
   const _params = Object.assign(typeof data === 'function' ? data() : data ?? {}, {})
-  const { uid='' } = useUserStore().userInfo
-  const params = {t: +new Date(),uid, ..._params}
+  const userInfo = JSON.parse(userInfoService.userInfo || '{}')
+  const params = {t: +new Date(),uid: userInfo?.uid, ..._params}
   return method === 'GET'
     ? request.get(url, { params, signal, onDownloadProgress }).then(successHandler, failHandler)
     : request.post(url, params, { headers, signal, onDownloadProgress }).then(successHandler, failHandler)
