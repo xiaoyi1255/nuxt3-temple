@@ -13,6 +13,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "serve": "node ./express/server.js --env dev",
+    "start": "node ./express/server.js",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
