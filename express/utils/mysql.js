@@ -1,8 +1,8 @@
 const mysql = require('mysql2/promise');
 const config = {
   host: '118.89.125.27',
-  user: 'root',
-  password: 'root',
+  user: 'xiaoyi',
+  password: 'xiaoyi1255',
   database: 'chat',
   connectionLimit: 10, // 连接池最大链接数
 }

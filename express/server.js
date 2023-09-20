@@ -18,6 +18,7 @@ redisCkient.get2Map().then((res) => {
 	roomMap = res || new Map();
 });
 app.use(express.json());
+
 // 托管静态文件
 app.use(
 	'/static',
@@ -39,12 +40,12 @@ const wss = new WebSocket.Server({ noServer: true });
 
 wsHandles(); // websocket 监听器
 
-app.use('/upload', uploadRoutes);
-app.use('', wechatRoutes);
-app.use('/user', userRouters);
+app.use('/api/upload', uploadRoutes);
+app.use('/api', wechatRoutes);
+app.use('/api/user', userRouters);
 
 // 在 Express 中处理除了 /ws 路由以外的请求
-app.get('/getAllRoomInfo', auth, async (req, res) => {
+app.get('/api/getAllRoomInfo', auth, async (req, res) => {
 	if (!redisCkient.size) {
 		return res.send(JSON.stringify([]));
 	}
@@ -58,7 +59,7 @@ app.get('/getAllRoomInfo', auth, async (req, res) => {
 	});
 });
 
-app.post('/updateInfo', async (req, res) => {
+app.post('/api/updateInfo', async (req, res) => {
 	// 设置允许访问的源（可以是具体的域名、端口、协议，或者使用 * 允许所有源）
 	const { name = '', roomId = 0 } = req.query;
 	if (roomId && name) {
@@ -102,7 +103,7 @@ app.post('/updateInfo', async (req, res) => {
 	res.send({ msg: 'ok', code: 0 });
 });
 
-app.get('/getRoomInfoByRoomId',(req, res) => {
+app.get('/api/getRoomInfoByRoomId',(req, res) => {
 	const { roomId } = req.query;
 	if (!roomId || !roomMap.size || !roomMap.get(roomId)) {
 		return res.send({});
@@ -111,7 +112,7 @@ app.get('/getRoomInfoByRoomId',(req, res) => {
 	res.send(roomInfo);
 });
 
-app.post('/createRoom', async (req, res) => {
+app.post('/api/createRoom', async (req, res) => {
 	const { roomId, name, id, password = '' } = req.query;
 	const room = roomMap.get(roomId);
 	const time = new Date().now;
@@ -141,7 +142,7 @@ app.post('/createRoom', async (req, res) => {
 
 server.on('upgrade', (request, socket, head) => {
 	switch (request.url) {
-		case '/ws':
+		case '/api/ws':
 			// 只允许 这个主机下的请求访问
 			if (
 				request.headers.origin.includes(WHITE_LIST[0]) ||
