@@ -238,4 +238,56 @@ router.post('/addFriend',auth, async(req,res) => {
   }
 })
 
+// 获取待添加列表
+router.post('/getVerifyFriends', async(req, res) => {
+  const uid = +req.body.uid
+  if (!uid) {
+    res.send({
+      code: 0,
+      data:  []
+    })
+    return
+  }
+  // 
+  const sql = `SELECT u.username, u.uid, u.gender, friendship.status
+                  FROM user_table u
+                  INNER JOIN friendship ON u.uid = friendship.user_id
+                  WHERE friendship.friend_id = ?;
+                `
+  const friends = await db.query(sql, uid)
+  res.send({
+    code: 0,
+    data:  friends
+  })
+})
+
+
+// 通过好友请求
+router.post('/passVerytifyFriend', async(req, res) => {
+  const { uid, fid, status} = req.body
+  if (!uid || !fid || !status) {
+    res.send({
+      code: 0,
+      data:  {
+        msg: '请重新登录后操作！！'
+      }
+    })
+    return
+  }
+  // 
+  const sql = `UPDATE friendship
+  SET status =?
+  WHERE user_id=? AND friend_id=?;`
+  const data = await db.query(sql, [status, +fid, +uid])
+  const msg = data.affectedRows ? '操作成功' : '操作失败！！！'
+  res.send({
+    code: 0,
+    data: {
+      status: data.affectedRows,
+      msg: msg
+    }
+  })
+})
+
+
 module.exports = router

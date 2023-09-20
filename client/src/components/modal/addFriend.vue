@@ -1,37 +1,66 @@
 <template>
-  <Modal v-if="showModal" v-model:open="showModal" :title="state.type == '好友' ? '添加好友' : '添加群聊'" :footer="[]"
+  <Modal v-if="showModal" v-model:open="showModal" :title="state.type == 'addFriend' ? '添加好友' : '好友验证'" :footer="[]"
     :keyboard="true">
     <Segmented v-model:value="state.type" :options="state.options" />
-    <div class="input">
-      <InputSearch v-model:value.trim="state.name" :placeholder="`请输入${state.type}名`" enter-button @search="onSearch"
-        size="large" :loading="state.loading" />
-    </div>
-
-    <div class="friends" v-if="state.type == '好友'">
-      <div v-if="state.list.length" v-for="(item, index) in state.list" :key="item.uid">
-        <div class="friends-item">
-          <div class="left">
-            <div>
-              <Avatar size="large" :style="{ backgroundColor: '#f56a00', verticalAlign: 'middle' }">
-                {{ item.username }}
-              </Avatar>
+    <template v-if="state.type == 'addFriend'">
+      <div class="input">
+        <InputSearch v-model:value.trim="state.name" :placeholder="`请输入好友名`" enter-button @search="onSearch"
+          size="large" :loading="state.loading" />
+      </div>
+  
+      <div class="friends">
+        <div v-if="state.list.length" v-for="(item, index) in state.list" :key="item.uid">
+          <div class="friends-item">
+            <div class="left">
+              <div>
+                <Avatar size="large" :style="{ backgroundColor: '#f56a00', verticalAlign: 'middle' }">
+                  {{ item.username }}
+                </Avatar>
+              </div>
+              <div class="left-content">
+                <span class="r20">昵称：<span v-html="changeTxt('' + item.username)"></span></span>
+                <span class="">性别：{{ item.gender || '未知' }}</span>
+              </div>
             </div>
-            <div class="left-content">
-              <span class="r20">昵称：<span v-html="changeTxt('' + item.username)"></span></span>
-              <span class="">性别：{{ item.gender || '未知' }}</span>
+            <div class="right">
+              <Button @click="onAddFriend(item)">添加</Button>
             </div>
-          </div>
-          <div class="right">
-            <Button @click="onAddFriend(item)">添加</Button>
           </div>
         </div>
+        <Empty v-else />
       </div>
-      <Empty v-else />
+    </template>
+    <template v-else>
+      <div v-if="state.verytifyList.length" v-for="item in state.verytifyList" :key="item.id">
+        <div class="friends-item">
+            <div class="left">
+              <div>
+                <Avatar size="large" :style="{ backgroundColor: '#f56a00', verticalAlign: 'middle' }">
+                  {{ item.username }}
+                </Avatar>
+              </div>
+              <div class="left-content">
+                <span class="r20">用户id: {{ item.uid }}</span>
+                <span class="r20">昵称：{{ item.username }}</span>
+                <span class="">性别：{{ item.gender || '未知' }}</span>
+              </div>
+            </div>
+            <div class="right">
+              <div v-if="item.status==='pending'">
+                <Button @click="onPassVerytify(item.uid, 'success')" size="small" :disabled="item.status!=='pending'">通过</Button>
+                <Button danger  @click="onPassVerytify(item.uid, 'reject')" size="small" :disabled="item.status!=='pending'">拒绝</Button>
+              </div>
+              <div v-else>
+                <Button :disabled="true">{{ statusMap[item.status] }}</Button>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div >
+        <Empty :loading="true" />
+      </div>
+    </template>
 
-    </div>
-    <div v-else>
-
-    </div>
 
   </Modal>
 
@@ -40,10 +69,11 @@
 <script setup lang="ts">
 import { Button, InputSearch, message, Modal, Segmented, Avatar, Empty } from "ant-design-vue";
 import { ref, reactive } from 'vue'
-import { getUserListByName, addFriend } from '@/apis/index'
+import { getUserListByName, addFriend, getVerifyFriends, passVerytifyFriend } from '@/apis/index'
 import { useUserStore } from "@/store/userStore";
 import { useRouter } from "nuxt/app";
 import { userInfoService } from '@/utils/auth'
+import { stat } from "fs";
 interface Props {
   showModal: boolean
 }
@@ -51,14 +81,21 @@ interface State {
   name: string
   type: string
   loading: boolean
+  verytifyLoading: boolean
   options: string[]
   list: UserInfo[]
+  verytifyList: any[]
 }
 interface UserInfo {
   username: string
   gender: string
   uid: string | number
 
+}
+const statusMap = {
+  pending: '待通过',
+  success: '已添加',
+  reject: '已拒绝',
 }
 
 const props = defineProps<Props>()
@@ -70,10 +107,12 @@ const userStore = useUserStore()
 
 const state = reactive<State>({
   name: '',
-  type: '好友',
+  type: 'verytify',
   loading: false,
-  options: ['好友', '群组'],
-  list: []
+  verytifyLoading: false,
+  options: ['addFriend', 'verytify'],
+  list: [],
+  verytifyList: []
 })
 const showModal = computed({
   get() {
@@ -81,6 +120,15 @@ const showModal = computed({
   },
   set() {
     emit('update:showModal', false)
+  }
+})
+
+watch(()=> state.type, (value) => {
+  console.log(value)
+  if (value == 'addFriend') {
+    
+  } else {
+    onVerifyFriends()
   }
 })
 const onSearch = async (value: string) => {
@@ -121,6 +169,23 @@ const onAddFriend = async(item: UserInfo) => {
     return
   }
   message.warning(msg)
+}
+
+const onVerifyFriends = async() => {
+  const res: any = await getVerifyFriends({}) 
+  state.verytifyList = res
+}
+
+const onPassVerytify = async(fid: number, flag:string) => {
+  state.verytifyLoading = true
+  const { msg='', status=0 } = await passVerytifyFriend({fid, status: flag})
+  if (status) {
+    message.success(msg)
+  } else {
+    message.error(msg)
+  }
+  state.verytifyLoading = false
+  onVerifyFriends()
 }
 
 const changeTxt = (str: string): string => {
