@@ -8,7 +8,12 @@ export default defineNuxtConfig({
       head: {
         title: '小易',
         meta: [],
-        script: [],
+        script: [
+          {
+            src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2666945466953856",
+            crossorigin: 'anonymous',
+          }
+        ],
         link: [],
         style: []
       },

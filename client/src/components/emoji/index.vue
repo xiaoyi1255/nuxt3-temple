@@ -7,8 +7,8 @@
           v-html="item"></li>
       </ul>
     </div>
-    <div v-for="items in emojiObj" :key="items.name">
-      <template v-if="items.name && items.value?.length">
+    <div v-for="items in emojiObj" :key="items?.name">
+      <template v-if="items?.name && items.value?.length">
         <p>{{ items.name }}</p>
         <ul class="default">
           <li v-for="(item, index) in items.value" :key="index" @click.stop="chooseEmojiDefault(item)" v-html="item"></li>
@@ -20,6 +20,15 @@
 <script lang="ts" setup>
 import { ref, reactive } from "vue";
 import { getAllTypeEmojis } from './utils'
+interface EmojiType {
+  allEmojis?: EmojiItem
+  defEmojis: EmojiItem
+
+}
+interface EmojiItem {
+    name:string,
+    value:any[]
+}
 
 const emit = defineEmits(["emojiHandle"]);
 const props = defineProps({
@@ -31,7 +40,10 @@ const props = defineProps({
 
 const res = getAllTypeEmojis()
 console.log(res)
-const emojiObj = ref({})
+
+const emojiObj = ref<EmojiType>({
+  defEmojis: res.defEmojis
+})
 
 if (props.all) {
   emojiObj.value = res
@@ -40,7 +52,11 @@ if (props.all) {
     defEmojis: res.defEmojis
   }
 }
-const emoji = reactive({
+const emoji = reactive<{
+  chooseItem:string
+  historyList:string[]
+  allEmoji:EmojiType
+}>({
   chooseItem: "",
   historyList: [],
   allEmoji: emojiObj.value,

@@ -2,47 +2,32 @@ const WebSocket = require('ws');
 const http = require('http');
 const express = require('express');
 const app = express();
-const cors = require('cors'); // 导入 cors 中间件
-const uploadRoutes = require('./routes/upload.js');
-const wechatRoutes = require('./routes/wechat.js');
-const userRouters = require('./routes/user.js');
 const path = require('path');
 const {auth} = require('./middleware/auth.js')
 const redisCkient = require('./utils/redis');
 const { MAX_AGE, WHITE_LIST, HEART_TIME } = require('./config.js');
+const { createFiveLiveWS } = require('./utils/fiveLine.js')
+const { registerRouer } = require('./routes/index.js')
+const { registerUse } = require('./middleware/use.js')
+// 注册中间件
+registerUse(app)
+// 注册路由
+registerRouer(app)
 
-
-app.use(cors());
 let roomMap = new Map();
 redisCkient.get2Map().then((res) => {
 	roomMap = res || new Map();
 });
-app.use(express.json());
 
 // 托管静态文件
-app.use(
-	'/static',
-	express.static(path.join(__dirname, './public'), {
-		maxAge: MAX_AGE
-	})
-); // 图片文件夹路径
-app.use((req, res, next) => {
-	console.log(req.path)
-	console.log(req.query)
-	console.log(req.body)
-  res.setHeader('Access-Control-Expose-Headers', "token, refresh-token");
-  next(); // 让请求继续到下一个中间件或路由处理程序
-});
+app.use('/static',express.static(path.join(__dirname, './public'), {	maxAge:MAX_AGE}));
 // 创建 HTTP 服务器
 const server = http.createServer(app);
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ noServer: true });
+const wss2 = new WebSocket.Server({ noServer: true });
 
 wsHandles(); // websocket 监听器
-
-app.use('/api/upload', uploadRoutes);
-app.use('/api', wechatRoutes);
-app.use('/api/user', userRouters);
 
 // 在 Express 中处理除了 /ws 路由以外的请求
 app.get('/api/getAllRoomInfo', auth, async (req, res) => {
@@ -51,7 +36,7 @@ app.get('/api/getAllRoomInfo', auth, async (req, res) => {
 	}
 	const roomInfo = [];
 	roomMap.forEach((value, key) => {
-		value && roomInfo.push(value);
+		value && !value.roomType && roomInfo.push(value);
 	});
 	res.send({
 		code: 0,
@@ -113,7 +98,7 @@ app.get('/api/getRoomInfoByRoomId',(req, res) => {
 });
 
 app.post('/api/createRoom', async (req, res) => {
-	const { roomId, name, id, password = '' } = req.query;
+	const { roomId, name, id, password = '', roomType } = req.body;
 	const room = roomMap.get(roomId);
 	const time = new Date().now;
 	if (!room) {
@@ -124,7 +109,8 @@ app.post('/api/createRoom', async (req, res) => {
 			serverTime: time,
 			password: password,
 			userList: [{ name, jionTime: time, active: false }],
-			messageList: []
+			messageList: [],
+			roomType:roomType
 		};
 		roomMap.set(roomId, roomInfo);
 		await redisCkient.set2Map(roomMap);
@@ -133,10 +119,17 @@ app.post('/api/createRoom', async (req, res) => {
 			msg: '房间创建成功'
 		});
 	} else {
-		res.send({
-			code: 5001,
-			msg: '房间号已存在'
-		});
+		if (roomType === 'friendRoom') {
+			res.send({
+				code: 0,
+				msg: '房间已存在'
+			});
+		} else {
+			res.send({
+				code: 5001,
+				msg: '房间号已存在'
+			});
+		}
 	}
 });
 
@@ -147,7 +140,8 @@ server.on('upgrade', (request, socket, head) => {
 			if (
 				request.headers.origin.includes(WHITE_LIST[0]) ||
 				request.headers.origin.includes(WHITE_LIST[1]) ||
-				request.headers.origin.includes('localhost')
+				request.headers.origin.includes(WHITE_LIST[2]) ||
+				request.headers.origin.includes(WHITE_LIST[3])
 			) {
 				wss.handleUpgrade(request, socket, head, (ws) => {
 					Socket = socket;
@@ -158,15 +152,19 @@ server.on('upgrade', (request, socket, head) => {
 					'Unauthorized request from:',
 					request.headers.origin
 				);
-				// 对其他主机的请求返回 403 状态码
-				// socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
-				// socket.destroy();
 			}
 			break;
+		case '/api/fiveLine':
+			wss2.handleUpgrade(request, socket, head, (ws) => {
+				Socket = socket;
+				wss2.emit('connection', ws, request);
+			});
 		default:
 			break;
 	}
 });
+
+createFiveLiveWS(wss2, WebSocket)
 
 function wsHandles() {
 	// 监听 WebSocket 连接
@@ -177,7 +175,7 @@ function wsHandles() {
 			message = message.toString();
 			const msg = JSON.parse(message);
 			msg.code = 200;
-			const { type, roomId, name, id, password = '' } = msg || {};
+			const { type, roomId, name, id, password = '', roomType='' } = msg || {};
 			const room = roomMap.get(roomId);
 			const time = new Date().getTime();
 			if (type == 'create') {
@@ -226,18 +224,18 @@ function wsHandles() {
 						// msg.code = 5002;
 					} else if (hasUser && !userIsSctivity) {
 						// 房间中的用户上线
-						msg.text = '欢迎' + name + '进入房间！';
+						!roomType && (msg.text = '欢迎' + name + '进入房间！');
 					} else {
 						room.userList.push({
 							name,
 							jionTime: +new Date(),
 							active: true
 						});
-						msg.text = name + '已进入房间';
+						!roomType && (msg.text = name + '已进入房间');
 					}
 				}
-			} else if (type === 'leave') {
-				if (Array.isArray(room.userList) && room.userList.length) {
+			} else if (type === 'leave' && !roomType) {
+				if (Array.isArray(room?.userList) && room.userList.length) {
 					const index = room.userList.findIndex(
 						(item) => item.name === name
 					);

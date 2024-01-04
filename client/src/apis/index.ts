@@ -12,6 +12,9 @@ enum urls  {
   refreshToken = '/user/refreshToken',
   getUserListByName='/user/getUserListByName',
   verifyCode="/verifyCode",
+  getallFriends="/user/getallFriends",
+  getUserInfoById="/user/getUserInfoById",
+  createRoom="/createRoom"
 }
 
 interface LoginRes {
@@ -40,6 +43,9 @@ const verifyCode = (data:any) => http.get({url: urls.verifyCode, data})
 const getVerifyFriends = (data:any) => http.post({url: urls.getVerifyFriends, data})
 const passVerytifyFriend = (data:any) => http.post({url: urls.passVerytifyFriend, data})
 
+const getallFriends = (data:any) => http.post({url: urls.getallFriends, data})
+const createRoom = (data:any) => http.post({url: urls.createRoom, data})
+const getUserInfoById = (data:any) => http.post({url: urls.getUserInfoById, data})
 
 export  {
   onLogin,
@@ -51,5 +57,8 @@ export  {
   onRegister,
   verifyCode,
   getVerifyFriends,
-  passVerytifyFriend
+  passVerytifyFriend,
+  getallFriends,
+  createRoom,
+  getUserInfoById,
 }

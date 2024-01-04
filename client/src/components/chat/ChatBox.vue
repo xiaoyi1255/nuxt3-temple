@@ -50,7 +50,7 @@ import { Image } from "ant-design-vue";
 import { ref, onMounted } from "vue";
 import { SoundOutlined } from "@ant-design/icons-vue";
 
-const getImgSrc = (url = "") => config.baseUrl + url;
+const getImgSrc = (url = "") => config.sourceUrl + url;
 const audio = ref(null);
 const duration = ref(0);
 const porps = defineProps({

@@ -3,12 +3,24 @@
       <Button type="primary" @click="newRoom('create')">{{ title.create }}</Button>
       <Button @click="newRoom('join')">{{ title.join }}</Button>
       <Button @click="getRoomListInfo" :loading="state.loading">房间列表</Button>
-      <div style="margin-top: 10vh;">
+
+      <div style="margin-top: 2vh;">
+        <Button type="primary" @click="createFiveLineRoom('create')">创建五子棋房间</Button>
+        <Button @click="createFiveLineRoom('join')">加入五子棋房间</Button>
+        <!-- <Button @click="getRoomListInfo" :loading="state.loading">五子棋房间列表</Button> -->
+      </div>
+
+
+      <div style="margin-top: 5vh;">
+        <Button @click="toLogin">登录</Button>
+      </div>
+      <div style="margin-top: 5vh;">
+        <Button @click="addFriend">添加好友</Button>
+        <Button @click="openFriendModal">好友列表</Button>
+      </div>
+      <div style="margin-top: 5vh;">
         <Button @click="tokenService.removeToken()">清除短期token</Button>
         <Button @click="tokenService.removeRefreshToken()">清除长期token</Button>
-      </div>
-      <div>
-        <Button @click="addFriend">添加好友</Button>
       </div>
 
     </div>
@@ -41,7 +53,9 @@
       <div v-else>空空如也~~</div>
     </Modal>
 
-    <ModalAddFriend v-model:showModal="state.addFriendModalShow" />
+    <ModalAddFriend v-if="state.addFriendModalShow" v-model:showModal="state.addFriendModalShow" />
+    <ModalFriend v-if="state.friendModalShow" v-model:showModal="state.friendModalShow" />
+    <ModalFiveline v-if="state.fiveLineModalShow" :type="state.createRoomType" v-model:showModal="state.fiveLineModalShow" />
   </template>
   <script lang="ts" setup>
   useHead({
@@ -63,6 +77,8 @@
     roomShow: boolean;
     roomListShow: boolean;
     addFriendModalShow: boolean;
+    friendModalShow: boolean;
+    fiveLineModalShow: boolean;
     addType:  'friend' | 'group'
     messages: {
       id: Date;
@@ -74,6 +90,7 @@
     password: number | ''
     type: string
     loading: boolean
+    createRoomType: 'create' | 'join'
   };
   
   import { Button, Input, message, Modal, InputNumber } from "ant-design-vue";
@@ -90,7 +107,9 @@
     newMessage: "",
     roomShow: false,
     roomListShow: false,
+    friendModalShow: false,
     addFriendModalShow: false,
+    fiveLineModalShow: false,
     addType: 'friend',
     roomList: [],
     room: '',
@@ -99,12 +118,17 @@
     messages: [],
     socket: null,
     type: '',
-    loading: false
+    loading: false,
+    createRoomType: 'create'
   });
   const title = {
     create: '创建房间',
     join: '加入房间',
     back: '返回房间',
+  }
+
+  const toLogin = () => {
+    router.push('/login')
   }
   
   const newRoom = (type) => {
@@ -112,8 +136,17 @@
     state.type = type
   };
 
+  const createFiveLineRoom = (type: 'create' | 'join' = 'create') => {
+    state.createRoomType = type
+    state.fiveLineModalShow = true
+  }
+
   const addFriend = () => {
     state.addFriendModalShow = true
+  }
+
+  const openFriendModal = () => {
+    state.friendModalShow = true
   }
   
   const handleOk = debounce(async () => {
@@ -210,7 +243,7 @@
     } 
     const { code, msg } = await $fetch(`${config.baseUrl}/createRoom`,{
         method: "POST",
-        query: {
+        body: {
           id: +new Date(),
           ...query
         }

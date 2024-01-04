@@ -23,7 +23,7 @@
     />
   </template>
   
-  <script setup>
+  <script setup lang="ts">
   import Emoji from "@/components/emoji/index.vue";
   import { SmileOutlined } from "@ant-design/icons-vue";
   import {  Textarea, Popover } from "ant-design-vue";
@@ -39,17 +39,17 @@
    * 点击展示表情
    */
   const selectEmoji = () => {
-    const Textarea = document.querySelector(".message-input");
+    const Textarea: HTMLTextAreaElement | null = document.querySelector(".message-input");
+    if (!Textarea) return;
     cursor.value = Textarea?.selectionEnd;
-    cursor.value = Textarea?.selectionStart;
-		console.log(Textarea?.selectionStart,Textarea?.selectionEnd)
+    // cursor.value = Textarea?.selectionStart;
     visible.value = !visible.value;
   };
   /**
    * 选择表情，并把表情插入输入框
    * @param {*} item 选择的表情
    */
-  const emojiHandle = (item) => {
+  const emojiHandle = (item: string) => {
     const msg = message.value;
     if (!cursor.value) {
       message.value += item;

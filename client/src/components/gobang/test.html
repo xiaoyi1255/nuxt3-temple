@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+      }
+      body {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+    <script>
+      class FiveLine {
+  // canvas元素
+  // css 宽高
+  constructor(canvas, { cssWidth = 500, cssHeight = 500 } = {}) {
+    this.canvas = canvas;
+    this.cssWidth = cssWidth;
+    this.cssHeight = cssHeight;
+    this.ctx = canvas.getContext("2d");
+    this.pixelRatio = this.getPixelRatio(this.ctx);
+    console.log("[ pixelRatio ] >", this.pixelRatio);
+    this.pieces = []; // 棋子坐标结合
+    this.curPlayer = "B"; // 当前黑子落子
+    this.winner = null; // 胜者
+    this.crossPoints = []; // 所有横竖线的交叉点坐标
+    this.gap = 0; // 格子宽度
+    this.init();
+    this.bindEvent();
+  }
+  getPixelRatio(context) {
+    const backingStore =
+      context.backingStorePixelRatio ||
+      context.webkitBackingStorePixelRatio ||
+      context.mozBackingStorePixelRatio ||
+      context.msBackingStorePixelRatio ||
+      context.oBackingStorePixelRatio ||
+      context.backingStorePixelRatio ||
+      1;
+    // window.devicePixelRatio：当前显示设备的物理像素分辨率与CSS 像素分辨率之比
+    return Math.round((window.devicePixelRatio || 1) / backingStore);
+  }
+  init() {
+    const { ctx, canvas } = this;
+    canvas.width = this.cssWidth * this.pixelRatio;
+    canvas.height = this.cssHeight * this.pixelRatio;
+    // 画布上有1000个像素，实际展示为500大小
+    // 即1个像素对应2个物理像素，使图像看上去更加清晰
+    canvas.style.width = this.cssWidth + "px";
+    canvas.style.height = this.cssHeight + "px";
+    const { width, height } = canvas;
+    // 背景
+    ctx.fillStyle = "#dbb263";
+    ctx.fillRect(0, 0, width, height);
+    // 格子线条样式
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#000";
+
+    // 得到15条横线、15条竖线的开始和结束坐标
+    const { row, col } = this.getLinePoints(width, height, 15);
+
+    // 绘制格子
+    this.drawLine(ctx, row, col);
+
+    // 计算15条横竖线的交叉点
+    this.crossPoints = this.getCrossPoints(row, col);
+    console.log("所有的交叉点 [ crossPoints ] >", this.crossPoints);
+  }
+  // 计算离点击的位置最近的一个交叉点坐标
+  nearestPoint(point, coords) {
+    let minDist = Infinity;
+    let nearest;
+    for (let coord of coords) {
+      let dist = this.getDistance(point, coord);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = coord;
+      }
+    }
+    return nearest;
+  }
+  getDistance(p1, p2) {
+    let dx = p1[0] - p2[0];
+    let dy = p1[1] - p2[1];
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  // 计算线条坐标
+  // 线条数量（现在的五子棋一般是15*15=255个交叉点）
+  getLinePoints(width, height, lineNum = 15) {
+    console.log("[ width ] >", width);
+    console.log("[ height ] >", height);
+    // 起点坐标
+    const start = width / lineNum / 2;
+    console.log("[ start ] >", start);
+    // 格子宽度
+    const gap = width / lineNum;
+    this.gap = gap;
+    console.log("[ gap ] >", gap);
+    // 生成格子坐标
+    const row = [];
+    const col = [];
+    for (let i = 0; i < lineNum; i++) {
+      row.push({
+        startX: start,
+        startY: start + i * gap,
+        endX: width - gap / 2,
+        endY: start + i * gap
+      });
+    }
+    console.log("[ row ] >", row);
+    for (let i = 0; i < lineNum; i++) {
+      col.push({
+        startX: start + i * gap,
+        startY: start,
+        endX: start + i * gap,
+        endY: height - gap / 2
+      });
+    }
+    console.log("[ col ] >", col);
+    return { row, col };
+  }
+  // 画线
+  drawLine(ctx, row, col) {
+    row.forEach((item, index) => {
+      ctx.beginPath();
+      ctx.moveTo(item.startX, item.startY);
+      ctx.lineTo(item.endX, item.endY);
+      ctx.stroke();
+      ctx.closePath();
+    });
+    col.forEach((item, index) => {
+      ctx.beginPath();
+      ctx.moveTo(item.startX, item.startY);
+      ctx.lineTo(item.endX, item.endY);
+      ctx.stroke();
+      ctx.closePath();
+    });
+  }
+  // 计算所有的交叉点
+  getCrossPoints(row, col) {
+    const points = [];
+    row.forEach((r) => {
+      col.forEach((c) => {
+        const A = [r.startX, r.startY];
+        const B = [r.endX, r.endY];
+        const C = [c.startX, c.endY];
+        const D = [c.endX, c.startY];
+        const intersection = this.getIntersection(A, B, C, D);
+        if (intersection) {
+          points.push(intersection);
+        }
+      });
+    });
+    return points;
+  }
+  // 获取AB和CD两条线的交点坐标
+  // A：开始坐标
+  // B：结束坐标
+  // C：开始坐标
+  // D：结束坐标
+  getIntersection(A, B, C, D) {
+    const x1 = A[0],
+      y1 = A[1],
+      x2 = B[0],
+      y2 = B[1],
+      x3 = C[0],
+      y3 = C[1],
+      x4 = D[0],
+      y4 = D[1];
+    const denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (denominator === 0) return null; // The lines are parallel
+    const x =
+      ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) /
+      denominator;
+    const y =
+      ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) /
+      denominator;
+    return [x, y];
+  }
+  bindEvent() {
+    const { ctx, canvas } = this;
+    // 监听落子
+    canvas.addEventListener("click", async (e) => {
+      if (this.winner) {
+        alert(`对局已结束，${this.winner}赢了，请重新开始`);
+        return;
+      }
+      const { x, y } = this.getMousePos(canvas, e);
+      console.log("点击的坐标 [ x, y ] >", x, y);
+      const point = this.nearestPoint([x, y], this.crossPoints);
+      console.log("对应到格子上最近的交叉点 [ x, y ] >", point);
+      if (
+        this.pieces.find((c) => c.point[0] === point[0] && c.point[1] === point[1])
+      ) {
+        alert("此处已有棋子");
+        return;
+      }
+      // 保存棋子
+      this.pieces.push({
+        player: this.curPlayer,
+        point
+      });
+      // 绘制棋子
+      await this.drawPiece(
+        point[0],
+        point[1],
+        this.curPlayer === "W" ? "white" : "black"
+      );
+      // 监听是否已有五子相连
+      const isWin = this.watchWin();
+      if (isWin) {
+        setTimeout(() => {
+          alert((this.curPlayer === "B" ? "小黑" : "小白") + "赢了")
+        }, 0)
+        this.winner = this.curPlayer;
+        return;
+      }
+      // 变更下一次的玩家
+      this.curPlayer = this.curPlayer === "W" ? "B" : "W";
+    });
+  }
+  // 判断是否五子连珠
+  watchWin() {
+    // 判断横向是否连起来了
+    const transverse = (arr) => {
+      // 按x轴大小排序
+      const xCoordinates = JSON.parse(JSON.stringify(arr)).sort(
+        (a, b) => a[0] - b[0]
+      );
+      console.log("[ xCoordinates ] >", xCoordinates);
+      let obj = {};
+      // 先按y轴分组
+      xCoordinates.forEach((item) => {
+        if (obj[item[1]]) {
+          obj[item[1]].push(item);
+        } else {
+          obj[item[1]] = [item];
+        }
+      });
+      console.log("[ obj ] >", obj);
+      for (const y in obj) {
+        let count = 1;
+        const element = obj[y];
+        if (element.length >= 5) {
+          for (let i = 1; i < element.length; i++) {
+            if (element[i][0] === element[i - 1][0] + this.gap) {
+              count++;
+            }
+          }
+          return count >= 5;
+        }
+      }
+    };
+    // 判断竖向是否连起来了
+    const vertical = (arr) => {
+      // 按y轴大小排序
+      const yCoordinates = JSON.parse(JSON.stringify(arr)).sort(
+        (a, b) => a[1] - b[1]
+      );
+      console.log("[ yCoordinates ] >", yCoordinates);
+      let obj = {};
+      // 先按x轴分组
+      yCoordinates.forEach((item) => {
+        if (obj[item[0]]) {
+          obj[item[0]].push(item);
+        } else {
+          obj[item[0]] = [item];
+        }
+      });
+      console.log("[ obj ] >", obj);
+      for (const x in obj) {
+        let count = 1;
+        const element = obj[x];
+        if (element.length >= 5) {
+          for (let i = 1; i < element.length; i++) {
+            if (element[i][1] === element[i - 1][1] + this.gap) {
+              count++;
+            }
+          }
+          return count >= 5;
+        }
+      }
+    };
+    // 判断斜向是否连起来了
+    const slant = (arr) => {
+      // 按x轴大小升序
+      const xCoordinates = JSON.parse(JSON.stringify(arr)).sort(
+        (a, b) => a[0] - b[0]
+      );
+      const findFiveInARow = (points) => {
+        // 将点转换为字符串，并放入一个集合中，以便我们可以快速查找它们
+        const pointSet = new Set(points.map((p) => p.join(",")));
+
+        // 遍历每一个点
+        for (let p of points) {
+          // 检查右斜线方向
+          let rightDiagonal = [];
+          for (let i = 0; i < 5; i++) {
+            const nextPoint = [p[0] + i * this.gap, p[1] + i * this.gap];
+            if (pointSet.has(nextPoint.join(","))) {
+              rightDiagonal.push(nextPoint);
+            } else {
+              break;
+            }
+          }
+
+          // 如果找到了五个连续的点，返回它们
+          if (rightDiagonal.length === 5) {
+            return rightDiagonal;
+          }
+
+          // 检查左斜线方向
+          let leftDiagonal = [];
+          for (let i = 0; i < 5; i++) {
+            const nextPoint = [p[0] + i * this.gap, p[1] - i * this.gap];
+            if (pointSet.has(nextPoint.join(","))) {
+              leftDiagonal.push(nextPoint);
+            } else {
+              break;
+            }
+          }
+
+          // 如果找到了五个连续的点，返回它们
+          if (leftDiagonal.length === 5) {
+            return leftDiagonal;
+          }
+        }
+
+        // 如果没有找到五个连续的点，返回null
+        return null;
+      };
+
+      return findFiveInARow(xCoordinates);
+    };
+    const checkWin = (coordinates) => {
+      console.log(`[ ${this.curPlayer}: coordinates ] >`, coordinates);
+      if (coordinates.length >= 5) {
+        return (
+          transverse(coordinates) || vertical(coordinates) || slant(coordinates)
+        );
+      }
+      return false;
+    };
+
+    const { pieces } = this;
+    console.log("[ this.pieces ] >", pieces);
+    const B = pieces
+      .filter((item) => item.player === "B")
+      .map((item) => item.point);
+    const W = pieces
+      .filter((item) => item.player === "W")
+      .map((item) => item.point);
+
+    return checkWin(this.curPlayer === "B" ? B : W);
+  }
+  // 绘制棋子
+  drawPiece(x, y, color) {
+    const { ctx, canvas } = this;
+    return new Promise((res, rej) => {
+      // 阴影
+      ctx.shadowColor = "#ccc";
+      ctx.shadowBlur = this.gap / 3;
+      ctx.beginPath();
+      ctx.arc(x, y, this.gap / 3, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      res();
+    });
+  }
+  // 获取鼠标点击在canvas内的坐标
+  getMousePos(canvas, event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    return { x: x * this.pixelRatio, y: y * this.pixelRatio };
+  }
+}
+    </script>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <script>
+      new FiveLine(document.querySelector("#canvas"), {
+        cssWidth: 600,
+        cssHeight: 600
+      });
+    </script>
+  </body>
+</html>

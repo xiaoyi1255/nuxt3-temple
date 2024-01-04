@@ -1,12 +1,12 @@
 <template>
   <div class="form">
-    <Form :model="formState" name="basic" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }" autocomplete="off"
+    <Form :model="formState" name="basic" :rules="rules" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }" autocomplete="off"
       @finish="onFinish" @finishFailed="onFinishFailed">
-      <Form.Item label="用户名" name="username" :rules="[{ required: true, message: '请输入用户名!' }]">
+      <Form.Item label="用户名" name="username" prop="username">
         <Input v-model:value="formState.username" />
       </Form.Item>
 
-      <Form.Item label="密码" name="password" :rules="[{ required: true, message: '请输入密码!' }]">
+      <Form.Item label="密码" name="password" prop="password">
         <InputPassword v-model:value="formState.password" />
       </Form.Item>
 
@@ -34,8 +34,8 @@ import {
   Space,
   RadioGroup,
 } from "ant-design-vue";
-import { reactive, ref, computed, watch } from "vue";
-import { useRouter } from 'vue-router'
+// import { reactive, ref, computed, watch } from "vue";
+// import { useRouter } from 'vue-router'
 import { debounce } from '@/utils/function'
 import { onLogin, onRegister } from '@/apis/index'
 import { useUserStore } from '@/store/userStore'
@@ -53,6 +53,24 @@ const props = defineProps({
 });
 const emit = defineEmits(['changeActiveKay'])
 const router = useRouter()
+const rules = {
+  username: [
+    { required: true, message: "请输入用户名", trigger: "blur" },
+    { min: 1, max: 20, message: "用户名长度在 1 到 20 个字符之间", },
+    {
+      pattern: /^[a-zA-Z0-9_]+$/,
+      message: "用户名只能包含字母、数字和下划线",
+    },
+  ],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 1, max: 20, message: "密码长度在 1 到 20 个字符之间" },
+    {
+      pattern: /^[a-zA-Z0-9_]+$/,
+      message: "用户名只能包含字母、数字和下划线",
+    },
+  ],
+};
 const options = reactive([
   { label: "男", value: "男" },
   { label: "女", value: "女" },
@@ -106,6 +124,10 @@ const onFinish = debounce(async (values: any) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log("Failed:", errorInfo);
 };
+
+onMounted(() => {
+  localStorage.clear()
+})
 </script>
 <style scoped lang="less">
 .form {

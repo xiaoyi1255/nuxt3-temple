@@ -1,42 +1,31 @@
-# Nuxt 3 Minimal Starter
+# 一个nuxt3 + express + webSocket 实现的多人聊天室：
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## 线上预览
+[www.xiaoyi.pub](www.xiaoyi.pub)
 
-## Setup
+## 项目运行
+```sh
+git clone https://gitee.com/jingmingt/chat.git
 
-Make sure to install the dependencies:
+# 客户端
+cd chat/client
+yarn
+yarn dev
 
-```bash
-# yarn
-yarn install
+# 服务端
+cd chat/express
+yarn
+yarn start
 
-# npm
-npm install
-
-# pnpm
-pnpm install
 ```
 
-## Development Server
 
-Start the development server on http://localhost:3000
+## 已有功能：
+房间： 创建房间、加入房间、
+聊天：基础聊天信息（表情、图片、视频、文案）、语音消息（这个需要https才可以使用现在没有https对应域名）
+用户系统：注册、扫码登录（配合订阅号）、好友添加及验证
+开发中：用户信息修改、忘记密码、好友私聊
 
-```bash
-npm run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-npm run build
-```
-
-Locally preview production build:
-
-```bash
-npm run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## 仓库
+[仓库地址](https://gitee.com/jingmingt/chat)
+[旧仓库](https://github.com/xiaoyi1255/nuxt3-temple)

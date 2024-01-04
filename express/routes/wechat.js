@@ -69,16 +69,18 @@ router.get('/verifyCode', async function (req, res) {
 		const sql = `SELECT username,uid,gender,did FROM user_table WHERE did = ? `
 		const queryhasUser = await db.query(sql, [OpenID])
 		if (!queryhasUser.length) {
+			const password =  randomCode()
 			// 注册并登录
 			const user = {
 				username: `user${code}`,
 				did: OpenID,
 				uid: code,
-				gender: ''
+				gender: '',
+				password
 			}
 			const inset_sql = `INSERT INTO chat.user_table (did, username, password) VALUES (?, ?,?)`
         console.log(inset_sql)
-        const results = await db.query(inset_sql, [user.did, user.username, 123456])
+        const results = await db.query(inset_sql, [user.did, user.username, password])
 				if (results.affectedRows === 1) {
           console.log('Insertion successful.');
 					createJwt(user, res)
@@ -86,7 +88,7 @@ router.get('/verifyCode', async function (req, res) {
 						code: 0,
 						data: { 
 							userInfo: user,
-							msg: "登录成功！！！"
+							msg: "注册并登录成功！！！"
 						}
 					})
         }

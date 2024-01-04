@@ -3,14 +3,16 @@
     <div class="dfsb aic top">
       <Button @click="exit(state)">退出房间</Button>
       <p class="tc title">
-        {{ connected ? `房间号${state.roomId}` : "加入房间失败" }}
+        {{ connected ?  (!state.roomType ? `房间号${state.roomId}` : friendInfo.username) : "加入房间失败" }}
         <Button v-if="!connected" @click="reConnectWebSocket(true)"
           >重新连接</Button
         >
       </p>
       <div>
-        <p>在线人数: {{ usersInfo.activityUsers }}</p>
-        <p>房间人数：{{ usersInfo.users }}</p>
+        <div v-if="!state.roomType">
+          <p>在线人数: {{ usersInfo.activityUsers }}</p>
+          <p>房间人数：{{ usersInfo.users }}</p>
+        </div>
       </div>
     </div>
 
@@ -83,6 +85,8 @@ import Recorder from "@/components/recorder/index.vue";
 import Upload from "@/components/upload/index.vue";
 import { config } from "@/baseConfig";
 import RoomInfoModel from "./model/InfoModel.vue";
+import { getUserInfoById } from '@/apis/index'
+
 import ChatBox from "./ChatBox.vue";
 const props = defineProps(["state"]);
 const emit = defineEmits(["changeRoom"]);
@@ -102,6 +106,7 @@ const roomInfoShow = ref(false);
 const roomInfoLoading = ref(false);
 const receivedMessages = ref([]);
 const chat = ref(null);
+const friendInfo = ref('')
 let socket = null;
 
 let timer = null;
@@ -292,8 +297,8 @@ const onVoice = (obj) => {
     });
 };
 let timeOut = null;
-onMounted(() => {
-  const { name, roomId } = props.state;
+onMounted(async() => {
+  const { name, roomId, roomType, uid } = props.state;
   if (!name || !roomId) {
     Message.loading("房间信息、用户名不存在，3秒后自动退出");
     timeOut && clearTimeout(timeOut);
@@ -302,8 +307,25 @@ onMounted(() => {
         path: "/createroom",
       });
     }, 3000);
-  }
+    return
+  } else if(roomType) { // 好友私聊
+    const userInfo = JSON.parse(userInfoService.userInfo || '{}')
+    const localUid = userInfo?.uid
+    const arr = roomId.split('-')
+    if (arr[0] != localUid && arr[1] !=localUid) {
+      Message.loading("房间信息不存在，3秒后自动退出");
+      timeOut && clearTimeout(timeOut);
+      timeOut = setTimeout(() => {
+        router.push({
+          path: "/createroom",
+        });
+      }, 3000);
+      return
+    }
 
+    const { userInfo: fInfo } = await getUserInfoById({uid})
+    friendInfo.value = fInfo
+  }
   connectWebSocket();
   window.addEventListener("beforeunload", onLoadHandle);
   chat.value && (chat.value.scrollTop = chat.value?.scrollHeight);

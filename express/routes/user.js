@@ -174,7 +174,7 @@ router.post('/getUserListByName', async(req, res) => {
     })
   }
 })
-
+// 添加好友
 router.post('/addFriend',auth, async(req,res) => {
   const { uid, friendId, info='null'} = req.body
   if (!uid || ! friendId) {
@@ -276,9 +276,10 @@ router.post('/passVerytifyFriend', async(req, res) => {
   }
   // 
   const sql = `UPDATE friendship
-  SET status =?
+  SET status =?,room_id=?
   WHERE user_id=? AND friend_id=?;`
-  const data = await db.query(sql, [status, +fid, +uid])
+  const roomId = uid + '-' + fid
+  const data = await db.query(sql, [status, roomId, +fid, +uid])
   const msg = data.affectedRows ? '操作成功' : '操作失败！！！'
   res.send({
     code: 0,
@@ -289,5 +290,55 @@ router.post('/passVerytifyFriend', async(req, res) => {
   })
 })
 
+// 获取所有 好友列表
+router.post('/getallFriends', async(req, res) => {
+  const { uid } = req.body
+  if (!uid) {
+    res.send({
+      code: 0,
+      msg: '请先登录！'
+    })
+    return
+  }
+  const sql = `SELECT 
+                u.username, u.uid, friendship.friend_id,  u.gender, friendship.status, friendship.room_id as roomId
+              FROM user_table u
+                INNER JOIN friendship ON u.uid = friendship.user_id
+              WHERE friendship.user_id=?; `
+  const sql2 = `SELECT 
+            u.username, u.uid, friendship.friend_id,  u.gender, friendship.status, friendship.room_id as roomId
+          FROM user_table u
+            INNER JOIN friendship ON u.uid = friendship.user_id
+          WHERE friendship.friend_id = ?;`
+  const friends = await db.query(sql, [uid])
+  const friends2 = await db.query(sql2, [uid])
+  const allArr = [...friends,...friends2]
+  const resArr = []
+  allArr.forEach(async item => {
+    // 获取好友的信息
+    if (item.uid == uid) {
+      item.uid=item.friend_id
+    }
+    resArr.push(item)
+  })
+  res.send({
+    code: 0,
+    data: {
+      code: 0,
+      friends: resArr,
+      msg: 'success!'
+    }
+  })
+})
+
+router.post('/getUserInfoById', async(req, res) => {
+  const { uid } = req.body
+  const sql = `SELECT username, uid,did,gender FROM user_table WHERE uid=?;`
+  const userInfo = await db.query(sql, uid)
+  res.send({
+    code: 0,
+    userInfo: userInfo[0]
+  })
+})
 
 module.exports = router

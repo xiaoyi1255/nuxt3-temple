@@ -26,7 +26,7 @@ import { ref } from 'vue'
 import { TabPane, Tabs } from "ant-design-vue";
 import FormCom from "@/components/login/Form.vue";
 import QcanCode from "@/components/login/qcanCode.vue";
-const activeKey = ref('login')
+const activeKey = ref('scanCode')
 const changeActiveKay = () => {
   activeKey.value = 'login'
 }
